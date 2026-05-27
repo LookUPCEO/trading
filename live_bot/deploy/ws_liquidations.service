@@ -1,0 +1,29 @@
+[Unit]
+Description=Bybit liquidation collector (%I)
+Documentation=file:///opt/bot/docs/M1_vps_runbook.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=bot
+Group=bot
+WorkingDirectory=/opt/bot
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/bot
+ExecStart=/opt/bot/.venv/bin/python /opt/bot/tools/ws_liquidations.py \
+    --symbol %i \
+    --out /opt/bot/data/liquidations
+Restart=always
+RestartSec=5
+# Kill the process hard if it hangs past the restart window.
+TimeoutStopSec=15
+# Prevent runaway restart loops.
+StartLimitInterval=10min
+StartLimitBurst=30
+# Cap per-process resources so a leak can't consume the whole VPS.
+MemoryMax=512M
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

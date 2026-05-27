@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily cache refresh at 00:15 UTC
+
+[Timer]
+OnCalendar=*-*-* 00:15:00 UTC
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

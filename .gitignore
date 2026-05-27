@@ -1,0 +1,60 @@
+# ============== Secrets (CRITICAL — never commit) ==============
+.env
+.env.*
+!.env.template
+*.key
+*.pem
+credentials*
+secret*
+*_secret
+*_key.json
+
+# ============== Python ==============
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+
+# ============== OS ==============
+.DS_Store
+Thumbs.db
+
+# ============== Data (large + external) ==============
+# Bot data lives outside repo (~/mark19_data); these are belt-and-suspenders
+*.parquet
+*.csv
+*.zip
+*.data
+bars_*/
+bybit_raw_logs/
+ws_logs/
+shadow_runner_logs/
+shadow_decisions/
+shadow_fills/
+shadow_health/
+shadow_reconcile/
+live_logs/
+trades_perp/
+*.log
+
+# ============== Model artifacts (>5MB) ==============
+# 작은 model 은 포함 (4h_direction_v1 = 9KB)
+# 큰 model 은 외부 보관, 경로 기록만
+*.bin
+*.h5
+
+# ============== Cache / backup ==============
+*.bak
+*.bak_*
+*.swp
+*~
+.cache/
+tmp/
+
+# ============== State (live runtime) ==============
+live_bot_state/
+state/
+*.pid

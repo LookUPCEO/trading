@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily health report at 00:45 UTC (after cache_refresh)
+
+[Timer]
+OnCalendar=*-*-* 00:45:00 UTC
+Persistent=true
+RandomizedDelaySec=3min
+
+[Install]
+WantedBy=timers.target

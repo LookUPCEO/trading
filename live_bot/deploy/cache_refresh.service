@@ -1,0 +1,13 @@
+[Unit]
+Description=Nightly cache refresh (klines / funding / OI)
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=bot
+Group=bot
+WorkingDirectory=/opt/bot
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/bot
+ExecStart=/opt/bot/.venv/bin/python /opt/bot/tools/cache_refresh.py \
+    --symbols BTCUSDT ETHUSDT --intervals 60

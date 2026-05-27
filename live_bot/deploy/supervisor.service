@@ -1,0 +1,12 @@
+[Unit]
+Description=Strategy supervisor tick
+After=network.target
+
+[Service]
+Type=oneshot
+User=bot
+Group=bot
+WorkingDirectory=/opt/bot
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/bot
+ExecStart=/opt/bot/.venv/bin/python -m supervisor.core --once

@@ -1,0 +1,13 @@
+[Unit]
+Description=Liquidation collector heartbeat monitor
+After=network.target
+
+[Service]
+Type=oneshot
+User=bot
+Group=bot
+WorkingDirectory=/opt/bot
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/opt/bot
+ExecStart=/opt/bot/.venv/bin/python /opt/bot/tools/heartbeat_monitor.py \
+    --symbols BTCUSDT ETHUSDT

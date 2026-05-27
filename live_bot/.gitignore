@@ -1,0 +1,10 @@
+# Secrets
+.env
+*.bak
+
+# State
+../live_bot_state/
+../live_bot_logs/
+
+# Models (large)
+../models/*.joblib
