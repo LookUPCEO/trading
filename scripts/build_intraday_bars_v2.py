@@ -41,6 +41,16 @@ def build_bars_for_day(in_path: Path) -> pd.DataFrame:
     df["timestamp"] = pd.to_datetime(df["timestamp"], utc=True)
     df = df.sort_values("timestamp").reset_index(drop=True)
 
+    # FIX (day-boundary wrap-around): raw files include the next day's first
+    # snapshot (00:00:0X). bar_idx uses sec_of_day only (date-agnostic), so that
+    # row wraps into bar_idx 0 and overwrites bar 0's mid_close with the NEXT
+    # day's opening mid — corrupting mom_*/dist_ma/rv/cumflow near every day
+    # boundary. Drop rows not belonging to this calendar day.
+    _day = pd.Timestamp(in_path.stem).date()
+    df = df[df["timestamp"].dt.date == _day].reset_index(drop=True)
+    if len(df) == 0:
+        return pd.DataFrame()
+
     bid_p0 = df["bid_0_price"]; ask_p0 = df["ask_0_price"]
     mid = (bid_p0 + ask_p0) / 2
     spread = ask_p0 - bid_p0

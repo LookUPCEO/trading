@@ -25,7 +25,7 @@ except Exception:
     dn = None
 
 ROOT = Path("/Users/mark/mark19_data")
-MODEL_PATH = ROOT / "models_prod" / "4h_direction_v1.joblib"
+MODEL_PATH = ROOT / "models_prod" / "4h_direction_v2.joblib"
 HIST_DIR = ROOT / "bars_5min_v3" / "ETHUSDT"
 LIVE_DIR = ROOT / "bars_5min_v3_live" / "ETHUSDT"
 DP_LOG = ROOT / "dp_monitor.jsonl"
@@ -68,7 +68,9 @@ def predict_at(df_features: pd.DataFrame, ts: pd.Timestamp) -> tuple[float, str]
     X = row[FCOLS].copy()
     for c in FCOLS:
         X[c] = X[c].fillna(MEDIANS.get(c, 0))
-    p_up = float(MODEL.predict_proba(X)[0, 1])
+    # Force ALL trained trees (consistent with shadow_runner + mark19_live).
+    _n_trees = MODEL.get_booster().num_boosted_rounds()
+    p_up = float(MODEL.predict_proba(X, iteration_range=(0, _n_trees))[0, 1])
     if p_up > 0.5 + DECISION_THR: dec = "LONG"
     elif p_up < 0.5 - DECISION_THR: dec = "SHORT"
     else: dec = "SKIP"

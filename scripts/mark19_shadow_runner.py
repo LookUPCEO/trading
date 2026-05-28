@@ -44,7 +44,7 @@ FILL_LOG_DIR = Path("/Users/mark/mark19_data/shadow_fills")
 LOG_DIR = Path("/Users/mark/mark19_data/shadow_runner_logs")
 RECONCILE_DIR = Path("/Users/mark/mark19_data/shadow_reconcile")
 MISMATCH_DIR = Path("/Users/mark/mark19_data/shadow_feature_mismatch")
-MODEL_PATH = Path("/Users/mark/mark19_data/models_prod/4h_direction_v1.joblib")
+MODEL_PATH = Path("/Users/mark/mark19_data/models_prod/4h_direction_v2.joblib")
 HISTORICAL_BARS_DIR = Path("/Users/mark/mark19_data/bars_5min_v3") / SYMBOL  # for warm-up
 
 for d in (DECISIONS_DIR, HEALTH_DIR, FILL_LOG_DIR, LOG_DIR, RECONCILE_DIR, MISMATCH_DIR):
@@ -165,7 +165,12 @@ def make_decision(model_artifact, feature_row: pd.Series, bar: dict, log) -> dic
             v = medians.get(c, 0.0)
         x.append(float(v))
     X = np.array([x], dtype=np.float32)
-    p_up = float(model_artifact['model'].predict_proba(X)[0, 1])
+    # Force ALL trained trees. Default predict uses best_iteration which is 2 for v1
+    # (n_estimators=200, early_stopping → underfitted). With 3 trees, p collapses
+    # to [0.5011, 0.5195] → never crosses |p-0.5|>0.05 → 0 trades in 1198d.
+    # Full 23 trees → realistic Sharpe +1.90 (memory walk-forward +1.81, consistent).
+    _n_trees = model_artifact['model'].get_booster().num_boosted_rounds()
+    p_up = float(model_artifact['model'].predict_proba(X, iteration_range=(0, _n_trees))[0, 1])
     conf = abs(p_up - 0.5)
     mid = float(bar['mid_close'])
     # Estimate top-of-book bid/ask from spread (live bar only has spread mean)

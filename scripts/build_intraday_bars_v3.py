@@ -40,6 +40,11 @@ def trades_features_for_day(trades_path: Path, day_str: str) -> pd.DataFrame:
         return pd.DataFrame()
     # timestamp is seconds-since-epoch float
     df["ts"] = pd.to_datetime(df["timestamp"], unit="s", utc=True)
+    # FIX (day-boundary wrap-around): drop trades from adjacent days so the
+    # date-agnostic sec_of_day → bar_idx mapping can't wrap them into bar 0.
+    df = df[df["ts"].dt.date == pd.Timestamp(day_str).date()].reset_index(drop=True)
+    if len(df) == 0:
+        return pd.DataFrame()
     # second-of-day → bar_idx
     sec = (df["ts"].dt.hour * 3600 + df["ts"].dt.minute * 60 + df["ts"].dt.second).astype("int64")
     df["bar_idx"] = (sec // BAR_SECONDS).astype("int32")

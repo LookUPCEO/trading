@@ -8,7 +8,7 @@ ONE codebase, two modes:
 Strategy (validated 2026-05-25):
   - ETHUSDT perpetual, 4h cycle, hold 48 5-min bars
   - Long features (mom_1d, rv_1d, cumflow_1d, dist_ma_1d, ...)
-  - Model: ~/mark19_data/models_prod/4h_direction_v1.joblib (XGB)
+  - Model: ~/mark19_data/models_prod/4h_direction_v2.joblib (XGB)
   - Entry: thr |p-0.5| > 0.05 → maker limit at top-of-book
   - Fallback: queue sim showed pure-taker still positive (Sh +2.48)
   - Expected: ~0.9-2.2 trades/day, +46 bp/day with 38% maker fill
@@ -45,7 +45,7 @@ Reconciliation (testnet 대체 — primary defense in live):
 
 Configuration via env vars (override defaults):
   MARK19_MODE = shadow | live           (default: shadow)
-  MARK19_MODEL_PATH = <path>            (default: ~/mark19_data/models_prod/4h_direction_v1.joblib)
+  MARK19_MODEL_PATH = <path>            (default: ~/mark19_data/models_prod/4h_direction_v2.joblib)
   MARK19_BYBIT_KEY = <api key>          (live only)
   MARK19_BYBIT_SECRET = <secret>        (live only)
   MARK19_LIVE_CONFIRM = "I_HAVE_READ_THE_RAILS_AND_ACCEPT_LOSS_RISK"
@@ -69,7 +69,7 @@ HOLD_BARS = 48                             # 4h hold
 SIGNAL_THRESHOLD = 0.05                    # |p-0.5| > 0.05
 DEFAULT_MODE = os.environ.get("MARK19_MODE", "shadow")
 MODEL_PATH = Path(os.environ.get("MARK19_MODEL_PATH",
-                                  "/Users/mark/mark19_data/models_prod/4h_direction_v1.joblib"))
+                                  "/Users/mark/mark19_data/models_prod/4h_direction_v2.joblib"))
 LOG_DIR = Path("/Users/mark/mark19_data/live_logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 BUFFER_BARS = 2100                         # ~7.3 days (need ≥7d for long features)
@@ -543,7 +543,9 @@ def make_decision(model_artifact, feature_row: dict, mid: float, best_bid: float
             v = medians.get(c, 0.0)
         x.append(float(v))
     X = np.array([x], dtype=np.float32)
-    p_up = float(model_artifact['model'].predict_proba(X)[0, 1])
+    # Force ALL trained trees (predict default uses best_iteration → underfitted on v1).
+    _n_trees = model_artifact['model'].get_booster().num_boosted_rounds()
+    p_up = float(model_artifact['model'].predict_proba(X, iteration_range=(0, _n_trees))[0, 1])
     conf = abs(p_up - 0.5)
     if conf <= SIGNAL_THRESHOLD:
         return Decision(ts.isoformat(), p_up, conf, "SKIP", None, 0.0, mode, mid, best_bid, best_ask,

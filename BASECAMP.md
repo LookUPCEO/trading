@@ -1,8 +1,45 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-05-27 (4h Direction R&D + deploy 진행 중 — prod model bug 발견)
-**Status:** Pre-flip blocked — prod model 이 거래 자체를 안 함 (best_iteration=2 bug)
+**Last updated:** 2026-05-28 (🛑 4h Direction INVALIDATED — wrap-around lookahead bug)
+**Status:** Deploy 전면 중단. 4h Direction = 버그 artifact. clean data 로 재검증 단계.
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🛑 2026-05-28 — 4h Direction INVALIDATED (필독)
+
+**4h Direction 전략은 deploy 직전 lookahead 버그로 무효 확정.** 가짜 edge 로 실거래 안 한 것이 핵심 성과.
+
+### 버그: day-boundary wrap-around (lookahead leakage)
+- 위치: `build_intraday_bars_v2.py` (+v3 trades) — `sec_of_day = dt.hour*3600 + dt.minute*60 + dt.second` 가 **날짜 무시**
+- raw 일별 파일은 다음날 첫 snapshot (00:00:0X) 을 포함 → 그 row 의 sec_of_day≈0~2 → bar_idx 0 → **그날 bar 0 의 마지막 sample 로 wrap** → `mid_close`가 **다음날 day-start mid 로 오염**
+- 예: 2026-04-29 bar0 mid_close $2253(=4-30 시가) vs 정상 $2288 / 5-26 bar0 $2074(=5-27 시가) vs 정상 $2112
+- 1198일 **모든 day 의 bar 0** 오염 → `mom_1d/mom_4h/dist_ma/rv/cumflow` 등 long features 가 day-boundary에서 **미래 가격 정보 포함 = lookahead**
+
+### Clean vs Buggy (진짜 walk-forward, window별 retrain)
+| Metric | 오염(buggy) | **CLEAN** |
+|---|---|---|
+| OOS Sharpe | +4.62 | **-0.10** |
+| OOS %/day | +0.730% | **-0.009%** (음수) |
+| AUC | 0.566 | **0.534** (=ceiling) |
+| Positive windows | 5/5 | **3/5** |
+
+→ 검증된 줄 알았던 모든 것 (**walk-forward 5/5, bootstrap p=0.002, +1.81 Sharpe, AUC 0.566**) = 전부 오염 데이터 artifact. clean 에선 edge 소멸.
+
+### 폐기
+- `4h_direction_v1.joblib` (best_iter=2 underfit) — 폐기
+- `4h_direction_v2.joblib` (200 trees, 오염 feature space 학습) — 폐기
+- shadow_runner/mark19_live/dp_monitor 의 model 의존 로직 — 재검증 전 사용 금지
+
+### 함정 목록에 추가 (반복 교훈)
+mark36 +1.45% lookahead / Wide-Deep p=0.85 / Tardis 시도17 p=0.55 / Stress sign-flip / **4h Direction +1.81 = day-boundary wrap-around lookahead (신규)**
+
+### ⚠️ 같은 build script 의존 결과 = 전부 의심
+- vol R²=0.566, large-move AUC=0.805 등도 같은 `build_intraday_bars` 사용 → **clean 재검증 전 신뢰 금지**
+- clean rebuild 완료: `bars_5min_v2_clean`, `bars_5min_v3_clean` (ETHUSDT 1198일)
+
+### Deploy infra 자체는 정상 (재사용 가능)
+WS / shadow runner / reconciler / risk rails / Discord / ΔP monitor / predict-fix(iteration_range) — 코드는 정상. 진짜 edge 만 없을 뿐.
 
 ---
 
