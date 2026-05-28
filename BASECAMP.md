@@ -1,8 +1,58 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-05-28 (🛑 4h Direction INVALIDATED — wrap-around lookahead bug)
-**Status:** Deploy 전면 중단. 4h Direction = 버그 artifact. clean data 로 재검증 단계.
+**Last updated:** 2026-05-28 (mark19 OB-only 한계 확정 — robust negative result)
+**Status:** ⏸ R&D 일단락. 가용 데이터(OB+trades+funding)로 ETH tradeable alpha 없음 확정. 다음은 User 의 시간/자본 결정.
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 📕 2026-05-28 — mark19 OB-only 한계 확정 (ROBUST NEGATIVE RESULT)
+
+**결론: Bybit OB 50-level + trades + funding 으로 ETH direction tradeable alpha 없음.** 모든 horizon·조건을 clean data + 진짜 walk-forward 로 스캔 완료. 가짜 edge 로 실거래 안 한 것이 핵심 성과.
+
+### 검증 매트릭스 (전부 clean data, 진짜 walk-forward = window별 retrain)
+
+| 신호 | 결과 | 판정 |
+|---|---|---|
+| Direction (OB) 4h | OOS -0.009%/day, AUC 0.534, 3/5 | ❌ |
+| Direction 6h/8h/10h/12h/1d | 전부 OOS 음수/비일관, AUC ~0.52, ≤2/5 | ❌ |
+| Magnitude (vol R²0.595, large-move AUC0.917) | 99% vol clustering persistence, OB alpha만 +0.009 AUC | ❌ 자명 |
+| Funding conditional (극단 p10/p90) | OOS -0.083%/day, gross +0.4bp (fee 5.9 못 넘음), t-test p=0.698 | ❌ |
+| Funding feature 순증분 | walk-forward AUC +0.0036 | ❌ 미미 |
+| **high_vol regime conditional** | mean +12.76bp/trade, bootstrap p=0.0005, **단 window 3/5 + 6 regime 중 1개(multiple testing)** | ⚠️ promising-UNCONFIRMED |
+
+### fee 는 벽이 아니다 (중요)
+- Round-trip: Mixed 38% maker **5.9bp**, taker **12.0bp**
+- Break-even accuracy: 4h 0.5375, 1d **0.514**, 7d **0.505** (long horizon 일수록 낮음)
+- → fee 는 long horizon 이면 acc 0.51 로 넘김. **진짜 벽은 그 acc 0.51 directional edge 조차 없다는 것** (예측 가능성 부재).
+
+### 과거 "발견"의 정체 (전부 함정)
+| 과거 결과 | 정체 |
+|---|---|
+| 4h Direction +1.81 Sharpe | **day-boundary wrap-around lookahead** (build_intraday_bars sec_of_day date 무시) |
+| mark36 +1.45% | lookahead |
+| vol "예측 가능" AUC 0.9 | 자명한 vol clustering persistence |
+| Wide-Deep Sharpe 1.19 | small-n, p=0.85, 시기 클러스터링 |
+| Tardis 시도17 1.53 | 6-date small-n + 데이터도 없음(현 환경) |
+| funding conditional | gross edge 0, fee 못 넘음 |
+| high_vol conditional | bootstrap 통과하나 3/5 windows = Wide-Deep 패턴 |
+
+### high_vol 단서 (재방문용, CONFIRMED 아님)
+- high_vol regime(vol 상위 1/3)에서 OOS direction acc 0.534 (overall 0.503 대비 높음), mean +12.76bp/trade, bootstrap p=0.0005
+- **그러나 window 3/5 + 6 regime 중 1개만 통과(multiple testing)** → confirmed edge 아님
+- 단독으로 더 파면 Wide-Deep 함정 (멈춤). **cross-exchange 등 새 데이터와 결합 시에만 재방문** 후보로 보존.
+
+### 자산화된 것 (재사용 가능 인프라)
+가짜 edge deploy 를 막은 검증 틀 — 어떤 미래 전략에도 재활용:
+- 진짜 walk-forward 프레임 (window별 retrain, lookahead 차단)
+- clean build pipeline (day-boundary fix 적용된 build_intraday_bars_v2/v3)
+- deploy stack: WS feed, reconciler, risk rails(1x, 0.01ETH), shadow runner, Discord, ΔP monitor, predict iteration_range fix
+- 함정 체크리스트: clean rebuild → 진짜 walk-forward → bootstrap → window 일관성(5/5) → multiple-testing 경계
+
+### 남은 선택지 (강요 없음 — User 의 시간/자본 판단)
+1. **cross-exchange lead-lag** (B): Binance→Bybit 선행. 유일하게 안 본 진짜 후보지만 데이터 재수집 큼 + HFT 영역(우리 latency 로 잡힐지 의심) + 같은 함정 위험.
+2. **근본 pivot** (C): 예측이 아닌 구조적 수익(funding carry harvest, inventory MM on 넓은 spread alt), 또는 다른 시장(options IV — vol clustering 은 실재하니 vol product 면 활용 가능).
+3. **프로젝트 재평가**: 시장이 효율적이라는 것은 정직한 발견. 알파 탐색의 ROI 자체를 재고.
 
 ---
 
