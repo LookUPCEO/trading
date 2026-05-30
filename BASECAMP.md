@@ -6,7 +6,58 @@
 
 ---
 
-## 📕 2026-05-28 — mark19 OB-only 한계 확정 (ROBUST NEGATIVE RESULT)
+## 🔬 2026-05-30 — 진행 중: 시장 분류 연구 (열린 탐색)
+
+이전 단정(연속체 / fractal)들이 모두 한 측정/한 방법의 한계였음이 드러남. 1단계 펼치기에서 **t-SNE silhouette 0.42 > PCA 0.27** (선형이 비선형 구조를 못 봄), **breakout% C2 63 vs C0/C1 83%** (질적 분리), **세 스케일 PC1·PC2 동일** (fractal 가능성) 등이 동시에 보임. 5갈래 (비선형 강건성/fractal/breakout/거동측정/시기안정) 깊이 탐색 진행 중.
+
+이전 모든 단정 보류: range trading 닫힘, 시장=연속체, OB-only 한계 — 모두 한 측정/평균의 함정일 수 있음. 발견에 따라 재해석.
+
+LSTM 사전식별(1~11bar) AUC 0.582 ≈ 정적 0.576 — 시퀀스의 추가 정보는 "깨지는 순간"에만 (사후). breakout 사전 예측 불가.
+
+range+손절 검증 (range-v2): gross +2.15bp(4/5 walk-forward, 처음 시기일관 robust edge), 단 non-VIP maker fee 4bp 못 넘음. VIP rebate 면 +6bp/trade +0.46%/day.
+
+박스 지형 (box-map): 박스 폭 항상 fee 넘음(100%), 넓은 박스 덜 깸(corr -0.22), 안 깬 박스 사전 식별 천장 ~0.58.
+
+---
+
+## 🗺️ 2026-05-28 — ETH 시장 지도 (이전 "효율적" 결론 부분 교정)
+
+**중요: 아래 NEGATIVE RESULT 의 "5min~1d random walk → 효율적" 은 퉁침 오판이었음.** 조건부/스케일별로 다시 보니 구조가 있다. 단 "구조 있음 ≠ fee 넘는 edge" (검증 진행 중).
+
+### Variance Ratio 스케일 스캔 (Lo-MacKinlay z, N=344,917)
+| 스케일 | VR | z-stat | 판정 |
+|---|---|---|---|
+| 초~분 (1s~5min) | **0.40** | — | 강한 mean-rev (HFT 영역) |
+| 10m~8h | 0.93~0.98 | **z=-12.8 ~ -2.2** | **유의한 mean-reversion** (퉁쳐서 놓침) |
+| 12h~7d | 0.93~0.96 | z=-1.6~-0.8 | random walk |
+
+→ "5min~1d random walk" 는 틀림. N 크니 VR 0.94 도 z=-8.8 (유의). **10분~8시간이 통계적으로 mean-reverting**.
+
+### 조건부 VR (전체 평균이 숨긴 강한 구조)
+| 스케일 | 전체 | high-vol | **low-vol** |
+|---|---|---|---|
+| 30m | 0.96 | 0.99 | **0.79** |
+| 1h | 0.94 | 0.97 | **0.79** |
+| 8h | 0.96 | 0.91 | **1.44** |
+
+→ **low-vol + 30m~1h = VR 0.79 (강한 mean-reversion, 거래가능 스케일)**, low-vol + 8h = VR 1.44 (강한 trend). 저변동 국면에서 단기 되돌림 / 장기 추세.
+
+### 시기축: 월 단위 진동 (연도는 착시)
+- reversion/momentum, VR(2h) 모두 **월~분기 단위로 진동** (2026-04 도 강한 reversion -0.40 / VR, 2026-01 강한 momentum +0.29)
+- "2023 후 효율화 소멸" = **연도 평균의 착시** (reversion월+momentum월 상쇄). 8개월 walk-forward window 가 진동을 평균 0 으로 뭉갰음.
+
+### 과거 실패 재해석
+- 4h **direction(momentum)** 이 clean OOS 음수였던 건, 그 스케일이 **mean-reverting(VR 0.94)** 인데 momentum 베팅 = **방향이 반대**였기 때문.
+- low-vol 단기 mean-reversion 을 조건부로 본 적 없음 → 놓친 코스.
+
+### 미해결 관문 (구조 ≠ 수익)
+low-vol 30m~1h mean-reversion 이 tradeable 한지: (1) bid-ask bounce 아닌 순수 구조인가, (2) reversion 폭이 fee 5.9bp 넘나, (3) low-vol 실시간 causal 감지되나, (4) 진짜 walk-forward 5/5. **검증 전까지 edge 주장 금지.**
+
+---
+
+## 📕 2026-05-28 — mark19 OB-only 한계 (NEGATIVE — 단 위 지도로 부분 교정됨)
+
+⚠️ 아래는 direction/momentum 각도의 negative. **"5min~1d 효율적" 부분은 위 지도가 교정** (조건부 mean-reversion 구조 존재). mean-reversion 코스는 미검증.
 
 **결론: Bybit OB 50-level + trades + funding 으로 ETH direction tradeable alpha 없음.** 모든 horizon·조건을 clean data + 진짜 walk-forward 로 스캔 완료. 가짜 edge 로 실거래 안 한 것이 핵심 성과.
 
