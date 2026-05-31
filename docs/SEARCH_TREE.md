@@ -130,10 +130,19 @@
     - **A-2 liquidation 등 외부신호** — 단 신중: 벽이 6bp(fee−실현gross)인데 최강 in-data 결합이 +1bp·감쇠. 외부 1신호가 6bp 메울 가능성 낮음 + multiple testing 위험.
     - **다른 holding scale 긴쪽 (4h/1d)** 미측정 (단 A.2 horizon sweep 이미 ❌ 경향).
 
+### [H] 외부 신호 (가격 반영 전 방향) — in-data 소진 후 진입
+- H.1 Binance(spot) → Bybit(perp) lead-lag (2026-05-31, 파일럿 8일 1s klines) ❌ at our latency:
+  - 데이터: Binance 공개 1s klines 다운로드(data.binance.vision), epoch 단위 가변(ms→2025부터 µs) 정규화. Bybit OB 와 epoch-sec 정렬.
+  - lookahead 정렬: Binance 신호 close[t](정보 ~t+0.999s) → Bybit 진입 mid[t+1+δ] (δ=latency초). 신호 < 진입 보장.
+  - **cross-corr: lag0(동시) +0.84 지배**. lag−1s(Bybit선행) +0.135 > lag+1s(Binance선행) +0.110 → 1s 해상도 사실상 동시, 오히려 Bybit 미세 선행. **"Binance 선행" 미지지.**
+  - 방향 gross(Binance 모멘텀→Bybit, δ≥1s): **+0.04~0.05bp (≈0)**, win<0.5. 시기 **감쇠 2023 +0.115 → 2026 −0.012**. fee/fill 적용 전 이미 죽음.
+  - 결론: 거래가능 timescale(latency≥1s)에 선행 없음. 선행은 sub-second(=latency/HFT 게임, 환경 밖) — 차익거래 소멸. 사용자 회의 적중.
+  - 형제 ⬜: **Binance perp(futures aggTrades) vs Bybit perp** (spot 썼음 — 단 0.84 동시상관상 perp도 더 동기화일 가능성 높아 low-value), liquidation/OI, on-chain.
+- H 형제 ⬜ (미탐): liquidation cascade, open-interest 급변, 펀딩 arb, on-chain flow.
+
 ### ⬜ 안 가본 큰 가지 (root-level 형제)
-- **틱~초 HFT 영역** (MM tier 영역, latency 인프라 필요)
+- **틱~초 HFT 영역** (MM tier 영역, latency 인프라 필요) — OBI/dobi 의 native 영역. H.1 도 여기로 수렴(선행=sub-second).
 - **일~주 거시** (펀더멘털, on-chain — OB 너머 데이터)
-- **alt / options / cross-exchange** (Binance lead-lag 등 — 데이터 재수집)
 - **VIP rebate tier 도달** (자본 규모, R&D 밖)
 - **shadow as a service** (남이 만든 신호 follow — 의사결정 outsource)
 
@@ -171,4 +180,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-05-31 (OBI child A-1b: 결합 공간 전체(비선형/조건부/상호작용 151조합)+OOS+FDR — 결합도 fee 못 넘음(깨끗한 best +1.09bp naive, fill후 +0.64). A-1 "결합 다 봄" 과장 교정. OBI child 강한 닫힘. 다음 root [틱~초 HFT] / 신중 A-2)
+**마지막 업데이트**: 2026-05-31 (H.1 Binance→Bybit lead-lag 파일럿: 1s 해상도 동시(corr 0.84), 거래가능 latency(≥1s)엔 선행 0(+0.05bp, 2026 음수). 선행=sub-second=latency게임 환경밖. H.1 ❌. 모든 길이 [틱~초 HFT]로 수렴)
