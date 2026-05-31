@@ -108,10 +108,19 @@
   - **형제2 hedge/straddle (실현가능 oracle) ❌** — delta-neutral 은 방향 PnL 0 (구조적). loser stop+winner hold 1Hz 시뮬: stop 10/20/40bp 전부 gross +0.04~0.67bp, net (fee~15) **-14bp**. "방향 안 정하고 oracle 잡기" 는 신기루 — 방향 노출 = side 결정 = 형제3 으로 환원.
   - **형제3 vol게이트 × 진입전 방향신호 ❌(fee 미만)** — causal 방향규칙 (mom5/rev5/mom15/OBI) gross: mom5 +0.008, mom15 +0.155, **OBI +0.369** (best). 전부 fee 4bp(M+M) 미만. **단 유일하게 구조 발견**: |OBI|q5 (강한 호가 불균형, t=0 causal) → 5m 방향 gross **+1.59bp**, win 0.543, |OBI|×vol 셀 최대 +2.35bp (q5×volq3). 시기: +1.22/+2.04/+1.81/+0.53 (4년 양수지만 2026 감쇠). **여전히 fee 미만 + maker fill adverse selection (range-v2 함정) 미적용** → 적용 시 더 악화.
   - **형제4 정보-진입 간극 천장 = CONFIRMED**: gap = oracle(11.77) − best causal(0.37) = **11.41bp (97%) 실현불가**. 이것이 "30s 덫" 의 일반형 — 모든 실현경로 공통 천장. oracle gross 는 풍부하나 **t≤0 정보로 잡을 수 있는 방향분은 fee 미만**.
-  - 살아있는 child ⬜ (G 사망 아님, HFT 가지로 연결):
-    - **OBI 방향을 tilt 로** (단독 sub-fee, 근-break-even 전략에 +1.59bp 더하기 — 단 그런 전략 현재 없음)
-    - **OBI 의 native 영역 = 더 짧은 horizon (1s~30s)** → root 의 [틱~초 HFT] 가지. 거기선 fee/latency 가 벽, 방향은 OBI 가 있음
-    - **다른 holding scale 긴쪽 (4h/1d)** 미측정
+  - OBI child A-1 (풍부한 데이터 재계산, 2026-05-31) ❌ at fee:
+    - **데이터 인벤토리**: OB 50레벨 1Hz 1198일 ✅, trades(publicTrade aggressor side+size) 1198일 ✅. 이전 OBI = top5만·trades 미사용·정적 = 빈약했음 확인.
+    - **깊이 가설 실패**: obi1/obi5(최상단)이 최선(gross +0.39/+0.37), 깊을수록 악화(obi20 +0.14, obi50 +0.07, q5 음수). 깊은 레벨=허수호가 노이즈. 거리가중 개선 없음.
+    - **trades flow contrarian+음수**(flow5m −0.197): aggressor 매수누적→하락반전. corr(obi5,flow5m)=0.02(독립이나 약함).
+    - **OB 동역학 dobi5_30 최선 단독** +0.581bp (정적보다 약간 나음).
+    - **결합(등가중 obi5+dobi5_30−flow5m, 과적합회피)**: gross +0.449bp (bootstrap CI [+0.14,+0.74]), 강신호 top10% +1.33bp.
+    - **시기 강한 감쇠**: 2023 +0.84→2024 +0.45→2025 +0.14→2026 +0.22 (효율화).
+    - **fill adverse selection 정면(실제 trades 체결판정)**: 강신호 top10% naive(mid) +1.33 → maker 체결분 +0.83bp (37% 삭감, fill rate 0.91). **maker net −6.67bp, taker net −9.69bp**. range-v2 함정 재현.
+    - 간극 천장 안 줄음: oracle 11.77 vs 실현가능(fill후) 0.83 = 여전히 ~11bp 실현불가.
+  - 살아있는 child ⬜ (G 사망 아님 — 단 in-data 경로 소진):
+    - **OBI/dobi 의 native 영역 = 더 짧은 horizon (1s~30s)** → root [틱~초 HFT]. 거기선 방향(OBI)은 있고 fee/latency 가 벽 (infra/tier = R&D 경계).
+    - **A-2 liquidation 등 외부신호** — 단 신중: 벽이 6bp(fee−실현gross)인데 최강 in-data 결합이 +1bp·감쇠. 외부 1신호가 6bp 메울 가능성 낮음 + multiple testing 위험.
+    - **다른 holding scale 긴쪽 (4h/1d)** 미측정 (단 A.2 horizon sweep 이미 ❌ 경향).
 
 ### ⬜ 안 가본 큰 가지 (root-level 형제)
 - **틱~초 HFT 영역** (MM tier 영역, latency 인프라 필요)
@@ -154,4 +163,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-05-31 (G 형제 전수 — 4 형제 전부 fee 미만, 간극천장 11.4bp 확정, OBI causal 방향신호 발견 sub-fee)
+**마지막 업데이트**: 2026-05-31 (OBI child A-1: 풍부한 데이터(깊이50/trades/동역학)로도 fee 못 넘음. 결합 +0.45bp, fill후 +0.83bp vs fee 7.5, 시기 감쇠. in-data 경로 소진 → root [틱~초 HFT] 또는 신중한 A-2)
