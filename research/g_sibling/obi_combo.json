@@ -1,0 +1,34 @@
+{
+  "xgb_reg_shallow": {
+    "oos_gross": 0.31709550165683953,
+    "oos_conv10": -0.21966002985077712,
+    "conv_n": 568
+  },
+  "xgb_reg_deep": {
+    "oos_gross": 0.04700686125762912,
+    "oos_conv10": 1.6162144061837989,
+    "conv_n": 568
+  },
+  "xgb_clf": {
+    "oos_gross": -0.11271856648187227,
+    "oos_conv10": -0.502623194660101,
+    "conv_n": 568
+  },
+  "logit_interact": {
+    "oos_gross": 0.46068897325693203,
+    "oos_conv10": 3.548064400519709,
+    "conv_n": 568,
+    "n_terms": 78
+  },
+  "_meta": {
+    "n_tried": 151,
+    "indiv_best": 0.581,
+    "best_oos": 0.46068897325693203,
+    "best_conv": 3.548064400519709,
+    "fdr_pass": 45,
+    "n_rules": 147,
+    "rule_oos_mean": 0.7884117455346557,
+    "best_oos_rule": "obi5\u00d7vol q0.8",
+    "best_oos_rule_gross": 3.3
+  }
+}

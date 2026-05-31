@@ -117,7 +117,15 @@
     - **시기 강한 감쇠**: 2023 +0.84→2024 +0.45→2025 +0.14→2026 +0.22 (효율화).
     - **fill adverse selection 정면(실제 trades 체결판정)**: 강신호 top10% naive(mid) +1.33 → maker 체결분 +0.83bp (37% 삭감, fill rate 0.91). **maker net −6.67bp, taker net −9.69bp**. range-v2 함정 재현.
     - 간극 천장 안 줄음: oracle 11.77 vs 실현가능(fill후) 0.83 = 여전히 ~11bp 실현불가.
-  - 살아있는 child ⬜ (G 사망 아님 — 단 in-data 경로 소진):
+  - OBI child A-1b (결합 공간 전체, 2026-05-31) ❌ at fee — A-1 "결합 다 봄"은 과장(개별+선형1개)이었음을 교정:
+    - **비선형/조건부/상호작용 전부 + OOS(날짜 시간분할) + FDR(BH)**. 151 조합 시도 기록.
+    - XGB 회귀 OOS gross +0.32(shallow)/+0.05(deep, 과적합 붕괴), XGB 분류 OOS −0.11.
+    - 로지스틱+pairwise 상호작용(78항) OOS +0.46, 강확신10% +3.55bp (단 1모델·fill 미적용).
+    - 조건부 규칙 147개 grid: train 최선 obi×vol +4.5bp대, **FDR 45/147 통과**. train상위10 OOS 평균 +0.79(대부분 붕괴, obi×vol 계열만 생존).
+    - **시너지 천장**: obi5×vol "생존"은 drift-agreement selection 인공물(취약 regime 베팅)이었음 — 깨끗한 게이트해석 obi5방향×vol게이트 = **+1.09bp naive (개별 천장과 동일)**.
+    - **fill adverse selection (obi5×vol OOS, 실제 trades)**: +1.09 → maker 체결분 +0.64 (fill 0.96) → net −3.4(M+M 낙관)/−6.9(M+T). 시기 2025 +1.21→2026 +0.58 감쇠.
+    - 결론: 결합 공간(비선형 포함)도 fee 못 넘음. 강확신 일부 +3.5bp 도달하나 fee(4~7.5) 미만 + fill 미생존 + 취약. **이번엔 결합까지 봐서 강한 닫힘.**
+  - 살아있는 child ⬜ (G 사망 아님 — in-data 경로(개별+결합) 소진):
     - **OBI/dobi 의 native 영역 = 더 짧은 horizon (1s~30s)** → root [틱~초 HFT]. 거기선 방향(OBI)은 있고 fee/latency 가 벽 (infra/tier = R&D 경계).
     - **A-2 liquidation 등 외부신호** — 단 신중: 벽이 6bp(fee−실현gross)인데 최강 in-data 결합이 +1bp·감쇠. 외부 1신호가 6bp 메울 가능성 낮음 + multiple testing 위험.
     - **다른 holding scale 긴쪽 (4h/1d)** 미측정 (단 A.2 horizon sweep 이미 ❌ 경향).
@@ -163,4 +171,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-05-31 (OBI child A-1: 풍부한 데이터(깊이50/trades/동역학)로도 fee 못 넘음. 결합 +0.45bp, fill후 +0.83bp vs fee 7.5, 시기 감쇠. in-data 경로 소진 → root [틱~초 HFT] 또는 신중한 A-2)
+**마지막 업데이트**: 2026-05-31 (OBI child A-1b: 결합 공간 전체(비선형/조건부/상호작용 151조합)+OOS+FDR — 결합도 fee 못 넘음(깨끗한 best +1.09bp naive, fill후 +0.64). A-1 "결합 다 봄" 과장 교정. OBI child 강한 닫힘. 다음 root [틱~초 HFT] / 신중 A-2)
