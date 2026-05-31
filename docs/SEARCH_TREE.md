@@ -1,0 +1,157 @@
+# Mark19 SEARCH TREE — non-VIP fee 넘는 robust edge 탐색
+
+매 작업 전 이 파일을 읽고, 작업 후 노드 상태/형제를 갱신한다. 휘발 방지.
+
+## 노드 상태 (legend)
+- ✅ 살아있음 (미verified, 추후 audit 필요)
+- ❌ 막힘 (정직한 negative — 단 parent 사망 ≠)
+- ⬜ 안 가봄 (형제 — 우선순위 백트래킹 대상)
+- 🔵 탐색 중
+- 💀 verified 사망 (lookahead/artifact 확인됨)
+
+## 백트래킹 규칙
+1. 한 가지 ❌/💀 ≠ 부모 분기점 사망
+2. 부모 사망 = 모든 형제 ❌/💀 (전부 확인된 경우만)
+3. 가지 막히면 → 부모로 → 안 가본 형제 우선 (먼 점프 금지)
+4. "엣지 없음 / R&D 종료" 결론 = 루트까지 전부 막혀야
+
+## 단정 금지 표현 (현재 막힘 표현하되 사망 단정 X)
+- ❌ "...effectively dead", "...not tradeable", "R&D 종료"
+- ✅ "이 진입틀에서 ❌", "이 청산틀에서 ❌, 형제 ⬜ 남음"
+
+---
+
+## 트리
+
+**[루트]** ETH 1Hz OB/trades 공간에 non-VIP fee 넘는 robust edge?
+
+### [A] Direction 예측
+- A.1 4h Direction model ❌ (clean walk-forward OOS -0.009, 더 정확히는 lookahead bug 였음 — buggy +0.73 / clean ≈ 0)
+- A.2 horizon sweep (6h/8h/10h/12h/1d) ❌ (전부 OOS 음수/비일관)
+- A.3 OB+funding XGBoost ❌ (funding feature AUC +0.0036, 미미)
+- A.4 conditional regime XGBoost ❌ (regime adaptive 1/5 OOS)
+- A.5 LSTM box sequence ❌ (사전 식별 AUC 0.582 ≈ 정적)
+- 형제 ⬜:
+  - **OB+trades+funding 결합 신호** (체계적 멀티스트림)
+  - **비선형 모델 제대로** (CatBoost / Transformer / TabNet — 우리 XGBoost 정적·LSTM 박스에 한정)
+  - **시간 결합 (요일+시간대+이벤트) conditional**
+  - **진입 후 관찰형 (post-entry signal)** — B 의 30s 정면 💀 (lookahead) 단 **다른 관찰 시간** 미탐색
+
+### [B] Magnitude
+- B.1 vol R²=0.595 ✅ → 자명 (naive vol[t]=vol[t+1] R² 0.561, OB alpha +0.034)
+- B.2 large-move AUC 0.917 ✅ → 자명 (naive AUC 0.908, OB alpha +0.009)
+- 거래 edge ❌ (크기만 예측, 방향 X)
+- 형제 ⬜:
+  - **vol-aware MM sizing** (예측 가능 vol 로 size/spread 조정 — 우리는 MM 아님)
+  - **straddle / vol-product** (옵션 없음, ETH perp 만)
+  - **large-move 직전 회피 신호로** (예측 가능 시 cancel — 단 MM 영역)
+
+### [C] Conditional / Regime
+- C.1 funding conditional (extreme p10/p90) ❌ (OOS -0.083%/day, gross +0.4bp)
+- C.2 high_vol regime conditional ❌ (3/5 windows, multiple testing — bootstrap p=0.0005 였으나 시기의존)
+- C.3 시퀀스/구조/조합 314 패턴 + Bonferroni ❌ (0/314 통과)
+- C.4 regime adaptive (autocorr/200MA) ❌ (causal 1/5)
+- 형제 ⬜:
+  - **제대로 된 며칠짜리 시장 분류** (5갈래 깊이서 silhouette 0.17~0.27 약함 확인 — 단 unsupervised k=4·5 분리 안 봄)
+  - **regime-aware fee tier 변경** (특정 regime 만 거래해 빈도 줄여 다른 fee 협상)
+  - **micro-regime** (분 단위 vol-cluster 켜져있는 동안만)
+  - **2-feature 전수 interaction** (314 는 논리적 조합만)
+
+### [D] Mean-reversion (단방향)
+- D.1 ACF lag1~lag48 ✅ universal (lag 1 -0.022 유의)
+- D.2 거래 edge ❌ (gross 0.43bp << fee 5.9bp, MM rebate 영역)
+- 형제 ⬜:
+  - **다른 horizon MR** (lag 6 이상 더 긴 — small)
+  - **조건부 MR** (high-vol 만, low-vol 만 — VR 0.79 발견과 연결)
+  - **portfolio MR** (BTC/SOL 등 multi-asset MR — 데이터)
+
+### [E] Range / 박스
+- E.1 진입틀
+  - band touch (2σ) ❌ (gross +0.33bp 1Hz)
+  - band 안 (1σ) ❌ (gross -1.43bp 1Hz)
+  - breakout 후 pullback ✅ (1Hz gross +2.84, pos 66%) **미verified**
+  - 형제 ⬜:
+    - 시간 기반 진입 (특정 시각)
+    - 큰 trade 직후 진입
+    - OB imbalance 진입
+    - momentum entry (방향 + momentum)
+    - 큰 박스 사전 식별 + 진입
+- E.2 청산틀
+  - tight target+stop ❌
+  - trailing 5bp 💀 (5min OHLC 순서 lookahead artifact — 1Hz audit 에서 -0.98)
+  - trailing 30bp ✅ (5min sim +7.89, **1Hz 미verified**)
+  - trailing 100bp ✅ (5min sim +9.11, **1Hz 미verified**)
+  - no-stop hold ✅ (5min sim +8.90, **1Hz 미verified**)
+  - 형제 ⬜:
+    - 부분청산 (1/2 target + 1/2 trail)
+    - 조건부 청산 (volume spike 후 청산)
+    - **trailing 의 1Hz 정밀** (1Hz 에서 큰 trail 도 같은 패턴인지)
+
+### [F] Timing 실현 (entry-conditional)
+- F.1 분산 진입 ❌ (단일 평균과 동일)
+- F.2 trailing 5bp 청산 💀 (5min OHLC artifact)
+- F.3 진입 후 30s 신호 → 5m hold 💀 (side=sign(t=30s) 를 PnL=t=0 에 적용 lookahead)
+- 형제 ⬜:
+  - **부분 capture** (peak 30/50/70% — cheat oracle +29.6bp 의 진짜 의미)
+  - **큰 박스 사전 식별** + 그 안 timing
+  - **진입 후 60s/120s 신호** (정직 case B 로 측정)
+  - **진입 후 OB 변화** 신호
+
+### [G] Q0 oracle gross
+- G.1 oracle one_way 5m: 시기 안정 12~18bp, fee 8bp >50% ✅
+- G.2 단방향 (long_only/short_only): 4.6~9.6bp, fee 8bp >30-58% ✅
+- G.3 vol clustering = 크기만 (방향 X) ✅
+- 실현 경로 (2026-05-31 형제 전수 탐색, causal side rule t≤0 정보만):
+  - 사전 vol 게이트 ❌ (크기만)
+  - 진입 후 30s 💀 (lookahead)
+  - **형제1 부분capture/스케일 ❌** — gap 이 죽임. causal 방향은 oracle 11.8bp 중 0.37bp 만 잡음 (3%). 그 0.37bp 의 일부를 부분 capture 해봐야 fee 고정비 대비 더 불리. peak 에서 부분청산 = 청산시점이 미래정보 = lookahead.
+  - **형제2 hedge/straddle (실현가능 oracle) ❌** — delta-neutral 은 방향 PnL 0 (구조적). loser stop+winner hold 1Hz 시뮬: stop 10/20/40bp 전부 gross +0.04~0.67bp, net (fee~15) **-14bp**. "방향 안 정하고 oracle 잡기" 는 신기루 — 방향 노출 = side 결정 = 형제3 으로 환원.
+  - **형제3 vol게이트 × 진입전 방향신호 ❌(fee 미만)** — causal 방향규칙 (mom5/rev5/mom15/OBI) gross: mom5 +0.008, mom15 +0.155, **OBI +0.369** (best). 전부 fee 4bp(M+M) 미만. **단 유일하게 구조 발견**: |OBI|q5 (강한 호가 불균형, t=0 causal) → 5m 방향 gross **+1.59bp**, win 0.543, |OBI|×vol 셀 최대 +2.35bp (q5×volq3). 시기: +1.22/+2.04/+1.81/+0.53 (4년 양수지만 2026 감쇠). **여전히 fee 미만 + maker fill adverse selection (range-v2 함정) 미적용** → 적용 시 더 악화.
+  - **형제4 정보-진입 간극 천장 = CONFIRMED**: gap = oracle(11.77) − best causal(0.37) = **11.41bp (97%) 실현불가**. 이것이 "30s 덫" 의 일반형 — 모든 실현경로 공통 천장. oracle gross 는 풍부하나 **t≤0 정보로 잡을 수 있는 방향분은 fee 미만**.
+  - 살아있는 child ⬜ (G 사망 아님, HFT 가지로 연결):
+    - **OBI 방향을 tilt 로** (단독 sub-fee, 근-break-even 전략에 +1.59bp 더하기 — 단 그런 전략 현재 없음)
+    - **OBI 의 native 영역 = 더 짧은 horizon (1s~30s)** → root 의 [틱~초 HFT] 가지. 거기선 fee/latency 가 벽, 방향은 OBI 가 있음
+    - **다른 holding scale 긴쪽 (4h/1d)** 미측정
+
+### ⬜ 안 가본 큰 가지 (root-level 형제)
+- **틱~초 HFT 영역** (MM tier 영역, latency 인프라 필요)
+- **일~주 거시** (펀더멘털, on-chain — OB 너머 데이터)
+- **alt / options / cross-exchange** (Binance lead-lag 등 — 데이터 재수집)
+- **VIP rebate tier 도달** (자본 규모, R&D 밖)
+- **shadow as a service** (남이 만든 신호 follow — 의사결정 outsource)
+
+---
+
+## 살아남은 진짜 발견 (거래 edge 아닌 시장 구조)
+이건 트리의 결론이 아니라, 탐색 과정에서 얻은 description:
+
+- **scale-invariant wave** (크기만 다름, 거동 universal — silhouette 0.17~0.27)
+- **mean-reversion universal but fee 1/14** (lag1 ACF -0.022, gross 0.43bp)
+- **5m windows are monotone path** (range/net 1.21, AUC direction 0.64 — 묘사이지 edge 아님)
+- **gross 존재** (Q0 oracle one_way 8.8~18.4bp 시기 안정 fee 8bp 초과 50%+)
+- **진짜 벽**: gross 있음, **실현/방향예측이 벽** (entry timing + maker fill + selection bias)
+- **MM 이 micro layer (5min 7bp 진동) 점유**, 우리는 큰 사건 (50bp+) 영역만
+- **간극 천장 (2026-05-31)**: 5m oracle 11.8bp 중 causal(t≤0) 방향이 잡는 건 0.37bp (3%). 97% 가 정보-진입 간극 → "30s 덫" 의 정량형. 모든 실현경로 공통.
+- **강한 OB imbalance → 5m 방향 (causal, 2026-05-31)**: |OBI|q5 gross +1.59bp, win 0.543, 4년 양수(2026 감쇠 +0.53). mark19 최초의 진짜 causal 방향신호 — 단 fee 미만 + fill 함정 미적용. native 영역은 더 짧은 horizon(HFT).
+
+## 폐기된 틀린 결론 (부활 금지)
+다음 문장은 함정의 산물이었음. 다시 쓰지 말 것:
+
+- ❌ "5min~1d random walk" — 평균 함정 (PCA 0.27 만, t-SNE 0.42 / 객관 시기 안 봄)
+- ❌ "gross 부족이 본질 벽" — Q0 reframe (gross 풍부, 실현/예측이 벽)
+- ❌ "trailing 죽음 = 4번째 종료" — sample 3 단정 (41% 살아남음 / no-stop hold +8.9)
+- ❌ "OB-only 효율적 시장" — 평균 함정 (조건부 VR 0.79, 시기별 진동 미반영)
+- ❌ "ETH 1Hz native + selection-bias-without + 시기 안정 = 진짜 edge" (B 신호) — lookahead
+
+## 5번 죽은 함정 family (반복 금지)
+| # | 신호 | 함정 |
+|---|---|---|
+| 1 | 4h Direction +1.81 | day-boundary wrap-around lookahead |
+| 2 | range-v2 +3.22 | 38% random Bernoulli fill 낙관 |
+| 3 | trailing 5bp +13.54 | 5min OHLC 순서 가정 (intra-bar) |
+| 4 | "trailing 죽음" 단정 | sample 3개 → 단정 (41% 살아남는 분포 무시) |
+| 5 | B 30s +1.08bp | side=sign(t=30s) PnL=t=0 적용 (lookahead) |
+
+---
+
+**마지막 업데이트**: 2026-05-31 (G 형제 전수 — 4 형제 전부 fee 미만, 간극천장 11.4bp 확정, OBI causal 방향신호 발견 sub-fee)

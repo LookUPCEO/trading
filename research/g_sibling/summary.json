@@ -1,0 +1,13 @@
+{
+  "n_windows": 14120,
+  "oracle_mean_bp": 11.774644838342613,
+  "causal_gross": {
+    "net_mom5": 0.007539721661229027,
+    "net_rev5": -0.007539721661229027,
+    "net_mom15": 0.15518056462757443,
+    "net_obi": 0.36905442676667427
+  },
+  "best_causal_gross_bp": 0.36905442676667427,
+  "fee_M+M_bp": 4.0,
+  "gap_oracle_vs_bestcausal": 11.40559041157594
+}
