@@ -150,6 +150,13 @@
   - ⚠️ **시기 드리프트**: 변동성-스케일 라벨(rv/atr/boll_width/range/ma_dev/macd/spread)은 2023저변동→2025 ~2배. z/비율 라벨(rsi/stoch/adx/obi/boll_pos/vol_z/flow)은 안정. → 변동성군 rolling z-score 정규화 필요.
   - 산출물: `research/i_labeling/` (labels.parquet, *_distribution.csv, corr_heatmap.png, temporal_boxplots.png, viz_*.png, STAGE1_REPORT.md). 코드 `scripts/i_labeling.py`,`scripts/i_validate.py`.
   - **이번엔 거래/예측/edge 결론 X** — 라벨 정상성만 확인.
+- I.1+ **정확성 보강 (라이브러리 대조+truncation) ✅ 통과, 버그 3건 수정** (2026-06-06):
+  - TA-Lib+pandas-ta 대조(6일): SMA/Stoch 완전일치(0), ATR/MACD ~1e-8, RSI/ADX ~1e-5(EWM 시드 수렴). di_diff 는 TA-Lib 과 4e-6 일치 (pandas_ta DMP 자체 정의가 비표준). 합성 이론 12/12 PASS. OB/체결 수동 검산(원시 독립경로) 전부 일치·부호 일관.
+  - **truncation invariance 테스트 (신규 lookahead 검출기)**: 미래 자른 재계산 → 과거 라벨 변하면 lookahead. **bigflow_5m/norm 검출** (당일 전체 q95 임계 = 일중 lookahead, 426/461행 실증) — 함정 family #6.
+  - **수정 3건**: ①bigflow 임계 → 이전 처리일 q95(causal, 첫날 NaN) ②boll std ddof=1→0 (TA-Lib 대조에서 비율 정확히 √(20/19) 상수 확인 → 표준 정렬) ③RSI/Stoch flat → 중립 50 (구 0='바닥' 오신호. RSI 실발생 0행, flat 14분창 14행).
+  - 수정 후: truncation **47/47 라벨 완전 동일(미래정보 0)**, 라이브러리 재대조 통과, 라벨 재생성 + **2단계 파이프라인 재실행 → 결론 전부 유지** (recency whitened 0.92/lift 1.04, 부호일치 0.783 vs 0.497, 노이즈 범위 변화).
+  - ⚠️ 라벨 시각 정의: 분 라벨 = 그 분 마지막 초 e 의 끝 (trades round-binning ≤e+0.5s) → **3단계 진입은 다음 분(≥e+1s)이어야 causal**.
+  - 산출물: `research/i_labeling/accuracy/ACCURACY_REPORT.md`, 코드 `scripts/i_acc_verify.py` (lib/synth/manual/trunc — 상시 재사용).
 - I.2 **유사도/거리 (축약+정규화+검색검증) 🔵→✅ 통과** (2026-06-06):
   - **축약 47→21차원**: 정규화 후 spearman |r|>0.7 군집 medoid. PCA EVR 90%→17차원 — **1단계 "유효 ~10" 추정은 과소였음(교정)**. 정보손실: 탈락 25개 복원 R² min 0.533/med 0.862. spread_bp 제외(1틱 양자화→scale 폭발). 방향군 대표 전존.
   - **정규화 causal**: rolling 통계 = 과거 15 sampled days(달력~90일), **현재 day 제외 → lookahead 구조적 불가**. 부호라벨 scale-only(부호 100% 보존), 크기라벨 full robust-z. 연도 IQR비 2.56→~1.1 (rv_3600 1.41 잔존).
@@ -191,7 +198,7 @@
 - ❌ "OB-only 효율적 시장" — 평균 함정 (조건부 VR 0.79, 시기별 진동 미반영)
 - ❌ "ETH 1Hz native + selection-bias-without + 시기 안정 = 진짜 edge" (B 신호) — lookahead
 
-## 5번 죽은 함정 family (반복 금지)
+## 6번 죽은 함정 family (반복 금지)
 | # | 신호 | 함정 |
 |---|---|---|
 | 1 | 4h Direction +1.81 | day-boundary wrap-around lookahead |
@@ -199,7 +206,8 @@
 | 3 | trailing 5bp +13.54 | 5min OHLC 순서 가정 (intra-bar) |
 | 4 | "trailing 죽음" 단정 | sample 3개 → 단정 (41% 살아남는 분포 무시) |
 | 5 | B 30s +1.08bp | side=sign(t=30s) PnL=t=0 적용 (lookahead) |
+| 6 | bigflow 라벨 | 큰체결 임계=당일 전체 q95 (일중 lookahead — truncation 테스트로 검출·수정) |
 
 ---
 
-**마지막 업데이트**: 2026-06-06 ([I] 유사도거래 2단계 ✅통과 — 47→21차원 축약(정보손실 R² med 0.86), causal 정규화(드리프트 2.56→1.1, lookahead 구조불가), 유사도가 "방향 구성"을 봄(부호일치 0.78 vs 0.50, 경로 corr +0.30 vs 0). whitened Euclid 권장. 다음 I.3 70% 쏠림 — 간극천장 0.37bp 대조 필수. 거래/edge 결론 X. 이전: 1단계 라벨링 ✅)
+**마지막 업데이트**: 2026-06-06 (I.1+ 정확성 보강 ✅ — 라이브러리 대조·수동검산·truncation 테스트, 버그 3건 수정(bigflow 일중 lookahead=함정#6, boll ddof, flat RSI/Stoch), 재생성 후 2단계 결론 유지. 같은 날 [I] 2단계 ✅통과 — 47→21차원 축약(정보손실 R² med 0.86), causal 정규화(드리프트 2.56→1.1, lookahead 구조불가), 유사도가 "방향 구성"을 봄(부호일치 0.78 vs 0.50, 경로 corr +0.30 vs 0). whitened Euclid 권장. 다음 I.3 70% 쏠림 — 간극천장 0.37bp 대조 필수. 거래/edge 결론 X. 이전: 1단계 라벨링 ✅)

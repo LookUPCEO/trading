@@ -1,8 +1,18 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-06 ([I] 유사도거래 2단계 ✅ — 유사도가 "방향 구성"을 봄)
-**Status:** 🔬 [I] 유사도 기반 거래 단계검증 진행 중 (1·2단계 통과, 다음 3단계 70% 쏠림)
+**Last updated:** 2026-06-06 (I.1+ 라벨 정확성 보강 ✅ — 버그 3건 수정, 함정 #6 등록)
+**Status:** 🔬 [I] 유사도 기반 거래 단계검증 진행 중 (1·1+·2단계 통과, 다음 3단계 70% 쏠림)
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🔬 2026-06-06 (보강) — I.1+ 라벨 정확성 audit ✅: 버그 3건 수정, 결론 유지
+
+- TA-Lib+pandas-ta 대조: SMA/Stoch 완전일치, EWM계열 ~1e-5 수렴잔차. 합성 이론 12/12. OB/체결 수동 검산 일치.
+- **truncation invariance 테스트 (신규 lookahead 검출기, `i_acc_verify.py trunc`)**: 미래 잘라 재계산 → 과거 라벨 변하면 lookahead. **bigflow 검출** (당일 q95 임계 = 일중 lookahead) = **함정 family #6**.
+- 수정: ①bigflow 임계→이전 처리일 q95(causal) ②boll ddof=1→0(√(20/19) 상수 확인) ③RSI/Stoch flat→50.
+- 수정 후 truncation 47/47 동일(미래정보 0). 재생성 + 2단계 재실행 → **결론 전부 유지** (부호일치 0.783/0.497).
+- ⚠️ 라벨 시각 = 분 마지막 초 e 의 끝 → **3단계 진입 ≥ e+1s 이어야 causal** (명시됨).
 
 ---
 
