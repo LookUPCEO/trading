@@ -150,8 +150,15 @@
   - ⚠️ **시기 드리프트**: 변동성-스케일 라벨(rv/atr/boll_width/range/ma_dev/macd/spread)은 2023저변동→2025 ~2배. z/비율 라벨(rsi/stoch/adx/obi/boll_pos/vol_z/flow)은 안정. → 변동성군 rolling z-score 정규화 필요.
   - 산출물: `research/i_labeling/` (labels.parquet, *_distribution.csv, corr_heatmap.png, temporal_boxplots.png, viz_*.png, STAGE1_REPORT.md). 코드 `scripts/i_labeling.py`,`scripts/i_validate.py`.
   - **이번엔 거래/예측/edge 결론 X** — 라벨 정상성만 확인.
-- I.2 유사도/거리 ⬜ (다음: 축약+정규화 라벨공간에서 과거 유사시점 검색 검증)
-- I.3 70% 방향쏠림 건수 ⬜
+- I.2 **유사도/거리 (축약+정규화+검색검증) 🔵→✅ 통과** (2026-06-06):
+  - **축약 47→21차원**: 정규화 후 spearman |r|>0.7 군집 medoid. PCA EVR 90%→17차원 — **1단계 "유효 ~10" 추정은 과소였음(교정)**. 정보손실: 탈락 25개 복원 R² min 0.533/med 0.862. spread_bp 제외(1틱 양자화→scale 폭발). 방향군 대표 전존.
+  - **정규화 causal**: rolling 통계 = 과거 15 sampled days(달력~90일), **현재 day 제외 → lookahead 구조적 불가**. 부호라벨 scale-only(부호 100% 보존), 크기라벨 full robust-z. 연도 IQR비 2.56→~1.1 (rv_3600 1.41 잔존).
+  - **시기 분포 (핵심)**: 정직 발견 — naive(raw47 global-z)의 시기쏠림이 우려보다 약했음(same-yr lift 1.19; 다수 라벨이 이미 bounded). 정규화+whitening 으로 recency 0.81→0.94, lift 1.19→**1.07** 일관 개선, 매치 연도분포 ≈ pool 구성 (전 연도 커버).
+  - **검색 동작**: 과거 90분 경로 corr top50 **+0.30 vs random 0.00** (top>rnd 85%). **부호 일치(방향 닮음) 0.782 vs random 0.499** (부호 15차원 전부 0.76~0.91) → **유사도가 "방향 구성이 같은 상태"를 찾음**. N충분: pool 중앙 126k, rank100 거리 3.28 << pool 중앙 6.73.
+  - **거리 척도**: whitened Euclid 가 시기중립 최선 → 3단계 기본 + cosine 교차확인.
+  - 산출물: `research/i_similarity/` (STAGE2_REPORT.md, labels_norm_reduced.parquet 21차원, 검증 csv/png). 코드 `scripts/i_reduce_norm.py`,`i_simsearch.py`,`i_signcheck.py`.
+  - ⚠️ caveats: 부호일치 0.78 = "상태 닮음"이지 미래방향 아님(이번엔 미래 안 봄). 203일 subsample — 3단계는 전체 1198일 전수 DB 고려. 일부 쿼리 잔존 시기쏠림(p10 0.57) → 3단계 판정은 시기분해 필수.
+- I.3 70% 방향쏠림 건수 ⬜ (다음: whitened 21차원 공간 top-N 의 미래방향 쏠림 — fee·fill·시기 audit + 간극천장(causal 0.37bp) 대조 필수)
 - I.4 fee 넘는 폭 건수 ⬜
 - ⚠️ 주의(트리 맥락): G/H 에서 **간극천장** 확정(causal 방향 0.37bp, fee 미만). 유사도가 새 정보를 만드는 게 아니라 *기존 라벨의 비선형 조건부*이므로, 2단계+에서 "유사시점 방향쏠림"이 나와도 **fee·fill·시기 audit + 간극천장 대조** 필수 (promising 흥분 금지).
 
@@ -195,4 +202,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-06 ([I] 유사도거래 1단계 라벨링 ✅통과 — 47라벨 계산·분포정상·시각화 의도대로. 단 중복강함(유효~10차원)+변동성군 시기드리프트 → 2단계 전 축약·정규화 필수. 거래/edge 결론 X. 이전: 2026-05-31 H.1 lead-lag ❌)
+**마지막 업데이트**: 2026-06-06 ([I] 유사도거래 2단계 ✅통과 — 47→21차원 축약(정보손실 R² med 0.86), causal 정규화(드리프트 2.56→1.1, lookahead 구조불가), 유사도가 "방향 구성"을 봄(부호일치 0.78 vs 0.50, 경로 corr +0.30 vs 0). whitened Euclid 권장. 다음 I.3 70% 쏠림 — 간극천장 0.37bp 대조 필수. 거래/edge 결론 X. 이전: 1단계 라벨링 ✅)

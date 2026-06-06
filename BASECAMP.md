@@ -1,8 +1,20 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-05-28 (mark19 OB-only 한계 확정 — robust negative result)
-**Status:** ⏸ R&D 일단락. 가용 데이터(OB+trades+funding)로 ETH tradeable alpha 없음 확정. 다음은 User 의 시간/자본 결정.
+**Last updated:** 2026-06-06 ([I] 유사도거래 2단계 ✅ — 유사도가 "방향 구성"을 봄)
+**Status:** 🔬 [I] 유사도 기반 거래 단계검증 진행 중 (1·2단계 통과, 다음 3단계 70% 쏠림)
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🔬 2026-06-06 — [I] 유사도거래 2단계 ✅: 축약+정규화 후 유사도는 "방향"을 본다
+
+- **축약 47→21차원** (|r|>0.7 medoid; PCA 90%→17차원 — 1단계 "~10차원" 추정 과소 교정). 정보손실 복원 R² min 0.53/med 0.86. spread_bp 제외(1틱 양자화→scale 폭발).
+- **정규화 causal**: rolling = 과거 15 sampled days, 현재 day 제외 → lookahead 구조적 불가. 부호라벨 scale-only(방향 100% 보존), 크기라벨 robust-z. 연도 IQR비 2.56→~1.1.
+- **시기 검증 (핵심)**: naive 의 시기쏠림은 우려보다 약했음(lift 1.19 — 라벨 다수가 이미 bounded). 정규화+whitening 으로 recency 0.81→0.94, lift→1.07 (시기 중립 달성, 전 연도 커버).
+- **검색 동작**: top 매치 과거 90분 경로 corr +0.30 vs random 0.00. **부호 일치 0.782 vs 0.499** (추세·OBI·flow 15차원 전부 0.76~0.91) → 닮은 과거 = 방향 구성이 같은 상태. pool 126k, N=100+ 여유.
+- 거리 척도: **whitened Euclid** 시기중립 최선 (cosine 교차확인용).
+- ⚠️ 다음 3단계(70% 미래방향 쏠림) 전 명심: **간극천장 causal 0.37bp** 대조, fee·fill·시기 audit. 부호일치 0.78 은 상태 닮음이지 미래방향 아님. 203일 subsample → 3단계 전수 DB(1198일) 고려.
+- 산출물: `research/i_similarity/STAGE2_REPORT.md` + parquet/csv/png.
 
 ---
 
