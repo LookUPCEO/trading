@@ -54,12 +54,18 @@ def rsi(c,n=14):
     up=d.clip(lower=0); dn=(-d).clip(lower=0)
     au=up.ewm(alpha=1/n,adjust=False).mean()
     ad=dn.ewm(alpha=1/n,adjust=False).mean()
-    rs=au/(ad+1e-12)
-    return 100-100/(1+rs)
+    # 100-100/(1+au/ad) == 100*au/(au+ad). flat(au=ad=0) 은 이론상 중립 50
+    # (구버전은 0 반환 — accuracy audit 에서 수정. 실데이터 발생 0건이었음)
+    den=au+ad
+    out=100*au/(den+1e-12)
+    return out.where(den>1e-12, 50.0)
 
 def stoch(c,h,l,n=14,d=3):
     ll=l.rolling(n,min_periods=n).min(); hh=h.rolling(n,min_periods=n).max()
-    k=100*(c-ll)/((hh-ll)+1e-12)
+    rngw=hh-ll
+    # flat 14분(hh==ll) 은 '범위 내 위치' 미정의 → 이론상 중립 50
+    # (구버전/TA-Lib 은 0 반환 = '바닥' 오신호. accuracy audit 에서 수정 — 정의 명시)
+    k=(100*(c-ll)/(rngw+1e-12)).where(rngw>1e-12, 50.0)
     return k, k.rolling(d,min_periods=d).mean()
 
 def macd(c,f=12,sl=26,sig=9):
@@ -81,7 +87,10 @@ def adx(h,l,c,n=14):
 MA_PERIODS=[5,15,30,60,120,240]   # minutes
 RV_WINS=[60,300,900,1800,3600]    # seconds
 
-def process_day(day):
+def process_day(day, trunc_sec=None, big_thr=None):
+    """trunc_sec: 검증용 — 그 초 이후 데이터를 자른 것처럼 처리 (truncation invariance 테스트).
+    big_thr: '큰 체결' 임계 (이전 처리일의 q95 — causal). None 이면 bigflow 라벨 NaN.
+       구버전은 당일 전체 q95 사용 = 일중 lookahead (truncation 테스트로 검출, 수정)."""
     try:
         ob=pd.read_parquet(f'{OB}/{day}.parquet',columns=obcols)
     except Exception as e:
@@ -91,6 +100,9 @@ def process_day(day):
     ob=ob[keep].reset_index(drop=True); ts=ts[keep]
     if len(ob)<5000: return None,None
     so=np.round((ts-ts.iloc[0]).dt.total_seconds().values).astype(int)
+    if trunc_sec is not None:
+        tm=so<=trunc_sec
+        ob=ob[tm].reset_index(drop=True); ts=ts[:tm.sum()]; so=so[tm]
     t0=ts.iloc[0]; n=int(so[-1])+1
     if n<BURN_MIN*60+120: return None,None
 
@@ -127,8 +139,9 @@ def process_day(day):
     np.add.at(buyv,tsec[isbuy],tsz[isbuy])
     np.add.at(sellv,tsec[~isbuy],tsz[~isbuy])
     np.add.at(vols,tsec,tsz)
-    if len(tsz)>100:
-        big=tsz>=np.quantile(tsz,0.95)
+    day_q95=float(np.quantile(tsz,0.95)) if len(tsz)>100 else None   # 다음 처리일에 전달 (causal)
+    if big_thr is not None:
+        big=tsz>=big_thr
         np.add.at(bign,tsec[big],np.where(isbuy[big],tsz[big],-tsz[big]))
     cbuy=np.cumsum(buyv); csell=np.cumsum(sellv); cbig=np.cumsum(bign); cvol=np.cumsum(vols)
     def flow(a,b):
@@ -158,7 +171,8 @@ def process_day(day):
         ma=sma(cs,k)
         feat[f'ma_dev_{k}']=((cs-ma)/(ma+1e-12)).values
         feat[f'ma_slope_{k}']=((ma-ma.shift(k))/(ma.shift(k)+1e-12)).values
-    bm=sma(cs,20); bsd=cs.rolling(20,min_periods=20).std()
+    # ddof=0 (모집단 std): TA-Lib/pandas-ta/차트 표준과 일치 (accuracy audit — 구버전 ddof=1 은 ×1.026 상수배)
+    bm=sma(cs,20); bsd=cs.rolling(20,min_periods=20).std(ddof=0)
     feat['boll_pos']=((cs-bm)/(bsd+1e-12)).values
     feat['boll_width']=(bsd/(bm+1e-12)).values
     feat['rsi_14']=rsi(cs,14).values
@@ -186,7 +200,10 @@ def process_day(day):
     feat['flow_30']=np.array([flow(s-30,s) for s in e])
     feat['flow_1m']=np.array([flow(s-60,s) for s in e])
     feat['flow_5m']=np.array([flow(s-300,s) for s in e])
-    feat['bigflow_5m']=np.array([(cbig[s]-cbig[max(s-300,0)]) for s in e])
+    if big_thr is not None:
+        feat['bigflow_5m']=np.array([(cbig[s]-cbig[max(s-300,0)]) for s in e])
+    else:
+        feat['bigflow_5m']=np.full(nmin,np.nan)   # 첫 처리일: causal 임계 없음
     # 거래량 z (급증/압축): 분거래량 log / 240분 rolling median
     vser=pd.Series(np.log1p(Vm))
     feat['vol_z']=((vser-vser.rolling(240,min_periods=30).median())/
@@ -200,7 +217,7 @@ def process_day(day):
     df.insert(0,'yr',day[:4])
     df['mid']=C   # 참고용 (라벨 아님)
     df=df.iloc[BURN_MIN:].reset_index(drop=True)   # burn-in 제거
-    return df, None
+    return df, day_q95
 
 def main():
     all_days=sorted([d[:-8] for d in os.listdir(OB) if d.endswith('.parquet')])
@@ -210,9 +227,10 @@ def main():
         if sd in all_days and sd not in days: days.append(sd)
     days=sorted(set(days))
     print(f'[setup] STEP={STEP} -> {len(days)} days, {days[0]}~{days[-1]}, BURN={BURN_MIN}min',flush=True)
-    parts=[]; t0=time.time()
+    parts=[]; t0=time.time(); prev_q95=None
     for di,day in enumerate(days):
-        df,_=process_day(day)
+        df,q95=process_day(day,big_thr=prev_q95)   # 큰체결 임계 = 이전 처리일 q95 (causal)
+        if q95 is not None: prev_q95=q95
         if df is not None:
             parts.append(df)
             if day in SAMPLE_DAYS_VIZ:
