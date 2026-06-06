@@ -1,0 +1,101 @@
+{
+ "17": [
+  "ma_dev_5"
+ ],
+ "24": [
+  "ma_slope_5",
+  "macd_hist"
+ ],
+ "23": [
+  "ma_dev_15",
+  "boll_pos",
+  "stoch_k",
+  "stoch_d"
+ ],
+ "26": [
+  "ma_slope_15"
+ ],
+ "25": [
+  "ma_dev_30",
+  "ma_dev_60",
+  "rsi_14",
+  "rsi_30",
+  "macd",
+  "di_diff"
+ ],
+ "21": [
+  "ma_slope_30"
+ ],
+ "20": [
+  "ma_slope_60"
+ ],
+ "19": [
+  "ma_dev_120",
+  "ma_dev_240"
+ ],
+ "13": [
+  "ma_slope_120"
+ ],
+ "14": [
+  "ma_slope_240"
+ ],
+ "4": [
+  "boll_width",
+  "atr_14",
+  "rv_300",
+  "rv_900",
+  "rv_1800",
+  "rv_3600"
+ ],
+ "8": [
+  "adx_14"
+ ],
+ "3": [
+  "range_bp",
+  "rv_60"
+ ],
+ "18": [
+  "body_ratio"
+ ],
+ "7": [
+  "upper_wick"
+ ],
+ "5": [
+  "lower_wick"
+ ],
+ "9": [
+  "obi1",
+  "obi5",
+  "obi20",
+  "obi_wtd"
+ ],
+ "10": [
+  "obi50"
+ ],
+ "6": [
+  "spread_bp"
+ ],
+ "12": [
+  "dobi5_30"
+ ],
+ "11": [
+  "dobi5_60"
+ ],
+ "1": [
+  "rv_ratio"
+ ],
+ "15": [
+  "flow_30"
+ ],
+ "16": [
+  "flow_1m"
+ ],
+ "22": [
+  "flow_5m",
+  "bigflow_5m",
+  "bigflow_norm"
+ ],
+ "2": [
+  "vol_z"
+ ]
+}

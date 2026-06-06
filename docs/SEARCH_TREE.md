@@ -140,6 +140,21 @@
   - 형제 ⬜: **Binance perp(futures aggTrades) vs Bybit perp** (spot 썼음 — 단 0.84 동시상관상 perp도 더 동기화일 가능성 높아 low-value), liquidation/OI, on-chain.
 - H 형제 ⬜ (미탐): liquidation cascade, open-interest 급변, 펀딩 arb, on-chain flow.
 
+### [I] 유사도 기반 거래 (사용자 아이디어, 2026-06-06~)
+컨셉: 매분 라벨링(지표조합) → 과거 유사시점 검색 → 방향 70%+ 쏠리고 폭>fee면 거래.
+단계검증: ①라벨링 ②유사도 ③70%쏠림 건수 ④fee넘는 건수. (각 단계 통과해야 다음)
+- I.1 **라벨링 (지표계산+분포정상성) 🔵→✅ 통과** (2026-06-06):
+  - 203일(2023~2026) 243k분행, **47 라벨** 계산 (추세/이격·모멘텀·변동성·OBI·flow·캔들, 전부 t≤0 causal, wrap제거).
+  - 분포 정상: 범위위반 0(RSI/Stoch/ADX∈[0,100], OBI/flow∈[-1,1]), 상수0, NaN≈0(ma_slope_240만 20%). 시각화 4일 의도대로 찍힘.
+  - ⚠️ **중복 강함**: 47→유효 독립차원 **~10개** (추세군/변동성군/OBI군/flow군 + 독립단독). 그대로 거리투입시 유사도 왜곡 → 2단계 전 축약(대표/PCA) 필수.
+  - ⚠️ **시기 드리프트**: 변동성-스케일 라벨(rv/atr/boll_width/range/ma_dev/macd/spread)은 2023저변동→2025 ~2배. z/비율 라벨(rsi/stoch/adx/obi/boll_pos/vol_z/flow)은 안정. → 변동성군 rolling z-score 정규화 필요.
+  - 산출물: `research/i_labeling/` (labels.parquet, *_distribution.csv, corr_heatmap.png, temporal_boxplots.png, viz_*.png, STAGE1_REPORT.md). 코드 `scripts/i_labeling.py`,`scripts/i_validate.py`.
+  - **이번엔 거래/예측/edge 결론 X** — 라벨 정상성만 확인.
+- I.2 유사도/거리 ⬜ (다음: 축약+정규화 라벨공간에서 과거 유사시점 검색 검증)
+- I.3 70% 방향쏠림 건수 ⬜
+- I.4 fee 넘는 폭 건수 ⬜
+- ⚠️ 주의(트리 맥락): G/H 에서 **간극천장** 확정(causal 방향 0.37bp, fee 미만). 유사도가 새 정보를 만드는 게 아니라 *기존 라벨의 비선형 조건부*이므로, 2단계+에서 "유사시점 방향쏠림"이 나와도 **fee·fill·시기 audit + 간극천장 대조** 필수 (promising 흥분 금지).
+
 ### ⬜ 안 가본 큰 가지 (root-level 형제)
 - **틱~초 HFT 영역** (MM tier 영역, latency 인프라 필요) — OBI/dobi 의 native 영역. H.1 도 여기로 수렴(선행=sub-second).
 - **일~주 거시** (펀더멘털, on-chain — OB 너머 데이터)
@@ -180,4 +195,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-05-31 (H.1 Binance→Bybit lead-lag 파일럿: 1s 해상도 동시(corr 0.84), 거래가능 latency(≥1s)엔 선행 0(+0.05bp, 2026 음수). 선행=sub-second=latency게임 환경밖. H.1 ❌. 모든 길이 [틱~초 HFT]로 수렴)
+**마지막 업데이트**: 2026-06-06 ([I] 유사도거래 1단계 라벨링 ✅통과 — 47라벨 계산·분포정상·시각화 의도대로. 단 중복강함(유효~10차원)+변동성군 시기드리프트 → 2단계 전 축약·정규화 필수. 거래/edge 결론 X. 이전: 2026-05-31 H.1 lead-lag ❌)
