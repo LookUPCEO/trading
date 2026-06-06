@@ -24,7 +24,7 @@
  ],
  "n_reps": 21,
  "clust_th": 0.7,
- "d_win": 15,
+ "d_win": 90,
  "signed": [
   "ma_dev_5",
   "ma_dev_15",
@@ -71,5 +71,5 @@
  ],
  "pca_n90": 17,
  "pca_n95": 22,
- "rows": 189241
+ "rows": 1135331
 }
