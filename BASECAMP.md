@@ -1,8 +1,19 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-07 (I.4 — **mark19 최초 fee 초과 후보**: thr70×{30m,1h,4h} net +5/+34/+90bp, 단 test CI 미확정)
-**Status:** 🔬 [I] 유사도 거래 — 4단계 부분통과. 다음 I.5 (walk-forward/능동청산/down-lean/shadow)
+**Last updated:** 2026-06-07 (I.5 — **4h thr70 = "약하지만 진짜 edge" 최근접**: Bonferroni 단독생존+폴드 5/5. 30m 정정)
+**Status:** 🔬 [I] 유사도 거래 — 5단계 통과. 다음 I.6 shadow 전향검증 (최우선)
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🔬 2026-06-07 — I.5 walk-forward+단조: 4h 가 진짜에 최근접, 30m 은 정정 하향
+
+- walk-forward: 전 쿼리 구조적 OOS (pool prefix+룰 사전지정). 폴드: **4h 5/5 양수** (2026 +55), 1h 3/5, 30m 2/5.
+- **누적 net CI 교정** (net 직접·day-mean): **4h +74.7bp Bonf99.5% [+8.3,+146.7] 유일 단독생존**. 결합 408건 +19.5 [+2.0,+38.2] 생존. **⚠️ 정정: stage4 '30m net CI 0 제외'는 gross/net 혼동 — 30m 은 95%도 ✗**. 2025Q3+ 단독 미확정 (점추정 +23.6 동부호 — 표본한계 우세, 단정 금지).
+- **thr 매끄러운 단조** (fee 교차 ~0.67) = 구조. **horizon 비단조** — 2h/3h 골(edge 0.07, 열린질문), 4h 돌출은 confounder 역방향 확인 (불리한 시간대에서 달성 = 진짜).
+- **why**: fee 11bp = 5m |move| 65% → 4h 10% (짧은 h 구조적 불가) + hit-edge 0.06→0.37 동반상승 (폭×예측 둘 다) + lean = 고변동 순간.
+- 부수관찰 (사후, 결론 아님): 늦은 시간대(US 세션) lean 강함 (30m/1h hit 0.71).
+- → I.6: **shadow 전향검증 최우선**, 능동청산, down-lean/2h3h골/시간대 구조 분해, 빈도확대(사전등록 후만).
 
 ---
 
