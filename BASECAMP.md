@@ -1,8 +1,19 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-07 (I.3 70% 쏠림 ✅ — 독립표 처리 후에도 null 대비 ×10~40, 단 감쇠+저빈도)
-**Status:** 🔬 [I] 유사도 기반 거래 단계검증 진행 중 (1·1+·2·2+·3 통과, 다음 4단계 폭>fee = 최종 관문)
+**Last updated:** 2026-06-07 (I.4 — **mark19 최초 fee 초과 후보**: thr70×{30m,1h,4h} net +5/+34/+90bp, 단 test CI 미확정)
+**Status:** 🔬 [I] 유사도 거래 — 4단계 부분통과. 다음 I.5 (walk-forward/능동청산/down-lean/shadow)
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🔥 2026-06-07 — I.3v2+I.4: 사상 첫 fee 초과 후보 (정직 한계 포함)
+
+- 독립 기준 교정 (사용자 지적): day당1개 → **미래 창 비겹침** (같은 day |Δt|≥horizon). 쏠림 재측정 — 부풀림 없음 (thr70 0.16~0.25% vs null ×15~25).
+- **hit rate (구조적 OOS)**: thr70 30m/1h/4h hit 0.64/0.64/0.68, gross +16/+45/+102bp, **net(T+T 11bp) +5.1/+34.0/+90.5bp, day-cluster CI 전부 0 제외** (n=190/139/79).
+- audit 통과: cheat injection 정상, outlier 아님 (med 기준 유지), drift 수집 아님 (분기벤치≈0), 군집 약함. 누적 net 전기간 우상향.
+- 간극천장 0.37bp 와 모순 아님 — 천장은 전수·고빈도 틀, 이건 희소(0.2%) 조건부 per-trade +16~100bp.
+- **정직 한계 (edge 확정 아님)**: test 단독 CI 0 포함 (n 소표본), short(down-lean) 약함 (1h down hit 0.54), 1h 2026 음수, **일수익 ~0.15%/day < 목표 0.5%**, 다중검정 형식보정 미적용.
+- 죽은 것: thr65 전부 (fee 미달), thr70 5m. → I.5: walk-forward 강건성 / 능동청산 / down-lean 분해 / shadow 라이브.
 
 ---
 
