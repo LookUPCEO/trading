@@ -19,6 +19,10 @@ import pandas as pd
 OUT = '/Users/mark/Desktop/Mark/mark19/research/i_similarity'
 LAB = '/Users/mark/Desktop/Mark/mark19/research/i_labeling/labels.parquet'
 HORIZONS = {'5m': 5, '10m': 10, '30m': 30, '1h': 60, '4h': 240}
+if os.environ.get('HORIZONS'):   # 예: "15m:15,20m:20,45m:45,2h:120,3h:180,6h:360,8h:480"
+    HORIZONS = {kv.split(':')[0]: int(kv.split(':')[1])
+                for kv in os.environ['HORIZONS'].split(',')}
+OUT_SUFFIX = os.environ.get('OUT_SUFFIX', '')
 K_CAND = 1000
 N_IND = 100
 EXCL_DAYS = 3
@@ -135,7 +139,7 @@ def main():
         if bi % (BLK * 50) == 0:
             print(f"  q {bi}/{len(qs)} elapsed={_t()-t0:.0f}s", flush=True)
     R = pd.DataFrame(recs)
-    R.to_parquet(f'{OUT}/lean70_v2_per_query.parquet')
+    R.to_parquet(f'{OUT}/lean70_v2_per_query{OUT_SUFFIX}.parquet')
     print(f"[done] {len(R)} queries, elapsed={_t()-t0:.0f}s")
     analyze(R)
 
