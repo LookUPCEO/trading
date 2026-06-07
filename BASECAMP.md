@@ -1,8 +1,18 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-07 (I.6a — 닮음 정의 31개 전부 OOS 사망, **21차원 유지 확정**)
-**Status:** 🔬 [I] 유사도 거래 — 6a 닫힘 (정직 negative). 다음 shadow 전향검증 (최우선)
+**Last updated:** 2026-06-07 (I.6-1 — 능동청산 전패(고정 hold 유지) + **shadow 데몬 가동** (bit-identical 검증))
+**Status:** 🔬 [I] 유사도 거래 — shadow 전향검증 가동 중 (결론까지 수개월). 형제: 백필/구조분해
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🔬 2026-06-07 — I.6-1: 능동청산 ❌ (들고 가라) + shadow 가동 ✅
+
+- A: 사전등록 5규칙(반전/소멸/익절/손절) 전부 고정 4h hold 패배 — FIXED +74.7 최고, 손절 +12 최악.
+  why: lean=고변동 순간 → 중간 트리거 다 걸림. **신호 가치 = 4h 끝까지 (winners run).**
+- B: shadow 데몬 가동 — replay 일치검증 **0.00e+00 (bit-identical)**, 매분 fup240 기록 + thr70 신호/4h outcome.
+  1Hz 수집 재개 겸용 (4/30 중단 복구). caveats: 정규화 5주 stale (백필 옵션), 유효신호 6/8 UTC~, 0.09건/일.
+- 모니터: `research/i_similarity/shadow/logs/daemon.log`, `outcomes.jsonl`. 머신 상시가동 필요.
 
 ---
 
