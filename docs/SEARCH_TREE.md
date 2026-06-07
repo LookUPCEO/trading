@@ -175,16 +175,24 @@
   - v1(day당 1개)은 과처리 (사용자 지적 적중 — 같은 날 5h 떨어진 5m 미래는 안 겹침). **올바른 독립 = 미래 창 비겹침 (같은 day |Δt|≥horizon)**. greedy 거리순, null 도 같은 제약. 유효 N: 5m~1h med 94~99 (고유일 86~90 + 같은날 복원), 4h 77 (물리한계).
   - 재측정: thr70 0.16~0.25% vs null 0.01~0.04% (×15~25) — **비독립 부풀림 없음** (v1보다 오히려 보수). OOS train 0.19~0.32%→test 0.10~0.13%. v1 결과는 lean70_per_query.parquet, v2 는 *_v2_* 로 보존.
 - I.4 **hit rate + 폭 + net ✅ 부분통과 — mark19 최초 fee 초과 후보 (단 test 통계 미확정)** (2026-06-07):
-  - **hit rate (쿼리 실제 미래, 구조적 OOS)**: thr70 — 30m hit 0.637/gross +16.1bp, 1h 0.640/+45.0, 4h 0.684/+101.5 (base ~0.50). **net(보수 T+T 11bp): +5.1/+34.0/+90.5bp**, day-cluster bootstrap **CI 전부 0 제외** (전체기간 n=190/139/79). thr65 전부 fee 미달 (못 씀), thr70 5m/10m 한계.
+  - **hit rate (쿼리 실제 미래, 구조적 OOS)**: thr70 — 30m hit 0.637/gross +16.1bp, 1h 0.640/+45.0, 4h 0.684/+101.5 (base ~0.50). net(T+T): +5.1/+34.0/+90.5bp. ⚠️ **I.5 에서 정정**: 당시 'CI 0 제외' 는 gross CI 혼용 — **net 직접 CI 로는 30m ✗ (95%도 0 포함), 1h ✓(95%)/✗(Bonf), 4h ✓✓**. thr65 전부 fee 미달, thr70 5m/10m 한계.
   - **audit 전부 통과**: cheat injection(배선 정상), outlier 아님(1h med +28, top3 제외 +38), drift 수집 아님(분기벤치 ≈0), day 군집 약함(139건/112일). 약점: **up-lean 주도** (1h down hit 0.54 +10bp — short 약함).
   - **간극천장 0.37bp 와 모순 아님 — 정의역이 다름**: 천장 = 전수·고빈도 평균 gross. 이건 희소(0.2%) 조건부 선택, per-trade +16~+101bp. k-NN 지역 조건부가 선형규칙 밖 국소 구조를 봄 (실증, "천장 깨짐" 단정은 안 함).
   - **정직 한계**: ①test(2025Q3~) 단독: 점추정 양수(+19.9/+48.1/+62.8) but **CI 전부 0 포함** (n=27/36/17 소표본) ②1h 2026 -6.2bp 음수(n=17), 4h 만 3년 전부 양수 ③일수익 thr70 합 ~15bp/day (test ~8) — **목표 50bp/day 미달** ④다중검정 형식 보정 미적용(10셀 중 3 생존, 단 CI 폭은 보수보정 생존권) ⑤분기 변동 큼 (8/8 일관 아님 — 4h 최선).
   - 산출물: STAGE4_REPORT.md, lean70_v2_per_query.parquet, lean70_v2_hit_net.csv, lean70_v2_net.png (누적 net 1h/4h 전기간 우상향).
-- I.5 ⬜ (다음 형제들 — edge 후보를 확정/기각으로):
-  - **walk-forward 강건성** (연도별 재적합, N/thr 민감도 — 튜닝 금지·강건성만)
-  - **능동 청산** (고정 hold → trailing/부분청산; E.2 형제와 연결)
-  - **down-lean 분해** (short 약함의 원인 — funding/drift/구조?)
-  - **shadow/paper 라이브** (test 표본은 시간이 해결 — 전향 검증이 가장 정직)
+- I.5 **walk-forward + 단조 강건성 ✅ — 4h thr70 "약하지만 진짜" 에 최근접 (확정 아님)** (2026-06-07):
+  - **walk-forward 구조**: pool=prefix+룰 사전지정+whitening 2023 → 전 81,682 쿼리 구조적 OOS. 순수성: 대표선택 2023 vs 전체 상관 max|Δr| 0.194/med 0.012 (오염 무시), 사후선택은 Bonferroni 99.5%(10셀) 보정.
+  - **폴드(반기 5)**: 4h **5/5 양수** (+86/+126/+72/+47/+55, 2026 포함), 1h 3/5 (2026H1 -17), 30m 2/5.
+  - **누적 net CI (교정: net 직접+day-mean)**: **4h n=79 net +74.7, Bonf 99.5% [+8.3,+146.7] 유일 단독 생존**. 1h +27.7 95%✓/Bonf✗(-1.7 마지널). 45m +21.0 95% 마지널. **30m ✗ — stage4 'net CI 0 제외' 주장은 gross/net 혼동 오류, 정정**. 결합(408건/225일) +19.5 99.5% [+2.0,+38.2]✓. **2025Q3~ 단독 ✗** [-5.4,+56.0] (점추정 +23.6 동부호 — 표본한계 우세 판단, 단정 금지).
+  - **thr 단조 (0.60~0.78)**: 매끄러움 — gross 가 fee 를 thr≈0.67 에서 연속 통과 = 구조 (톱니 없음).
+  - **horizon 촘촘 (15m~6h)**: 매끄럽지 않음 (정직) — 거친 증가 + **2h/3h 골 (edge 0.07~0.09, 열린 질문)** + 4h 돌출. 4h confounder 점검: 시간대 제한 시 30m/1h 오히려 약해짐 → **4h 돌출은 인공물 아님 (보수적 달성)**. 사전등록 가설: fee/|move| 구조 확증, ~4h 한계 후 감쇠는 6h n=27 미검증.
+  - **why**: ①fee 11bp = 5m |move| 의 65% → 4h 의 10% (짧은 h 구조적 불가) ②hit-edge 0.06→0.37 동반상승 = **net↑ 는 폭×예측 둘 다** ③lean 순간 = 고변동 순간 (|move| 시장 중앙 ~2배). 부수관찰: 늦은 시간대(US) lean 강함 (사후 — 결론 아님).
+  - 산출물: STAGE5_REPORT.md, lean70_v2_per_query_hfine.parquet, why_horizon_decomp.csv, why_horizon.png. 코드 i_wf_folds/i_wf_net_ci/i_why_horizon.py.
+- I.6 ⬜ (다음 형제들):
+  - **shadow/paper 전향 검증** (2025Q3+ 미확정의 정직한 해소 — 최우선)
+  - **능동 청산** (고정 hold → trailing/부분; E.2 연결, 4h n 얇음 보완)
+  - **구조 분해**: down-lean 약함 / 2h-3h 골 / 시간대(US 세션) — 원리
+  - **빈도 확대** (thr 0.68 등 — 사전 등록 후만, 사후 튜닝 금지)
 
 ### ⬜ 안 가본 큰 가지 (root-level 형제)
 - **틱~초 HFT 영역** (MM tier 영역, latency 인프라 필요) — OBI/dobi 의 native 영역. H.1 도 여기로 수렴(선행=sub-second).
@@ -227,4 +235,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-07 (I.3v2+I.4 — horizon 독립 교정 후 thr70×{30m,1h,4h} net(T+T) +5/+34/+90bp, 전체기간 CI 0 제외, audit 전부 통과 = mark19 최초 fee 초과 후보. 단 test 단독 CI 0 포함(소표본)·short 약함·일수익 0.15%/day<목표 — edge "확정" 아님. 다음 I.5: walk-forward/능동청산/down-lean/shadow)
+**마지막 업데이트**: 2026-06-07 (I.5 walk-forward+단조 — 4h thr70 Bonferroni 단독생존+폴드5/5+confounder 역방향 = "약하지만 진짜"에 최근접. 결합 99.5% [+2.0,+38.2] 0 제외. 정정: 30m 은 net CI ✗ (stage4 gross/net 혼동). 2025Q3+ 단독 미확정 → I.6 shadow 전향검증 최우선. thr축 매끄러운 단조=구조, horizon축 2h/3h 골=열린질문)
