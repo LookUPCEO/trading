@@ -25,9 +25,9 @@ import os, json
 import numpy as np
 import pandas as pd
 
-OUT = '/Users/mark/Desktop/Mark/mark19/research/i_similarity'
+OUT = os.environ.get('SIM_OUT', '/Users/mark/Desktop/Mark/mark19/research/i_similarity')
 os.makedirs(OUT, exist_ok=True)
-LAB = '/Users/mark/Desktop/Mark/mark19/research/i_labeling/labels.parquet'
+LAB = os.environ.get('SIM_LAB', '/Users/mark/Desktop/Mark/mark19/research/i_labeling/labels.parquet')
 
 D_WIN = int(os.environ.get('D_WIN', '15'))   # rolling 과거 day 수. 의도 = 달력 ~90일
 D_MIN = int(os.environ.get('D_MIN', '5'))    # (STEP=6 표본: 15/5, STEP=1 전수: 90/15)

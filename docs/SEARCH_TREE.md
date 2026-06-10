@@ -236,7 +236,14 @@
   - 기초특성 (겹치는 12일): **통념 반전 — SOL 마이크로 변동성 ≈ ETH (rv 1.07x)**, 스프레드만 23x (틱/가격; 4h 엔 경미). 유동성 우려 기우 (depth 9.9x, 거래량 $1.3B/day). → "SOL 이 더 거칠어 edge 클 것" 근거 약함. 판가름은 'kNN 방향 edge 가 SOL 에 존재하나'.
   - ⚠️ caveat: SOL 182일 = 시기 적음 (폴드 1~2, 단독 OOS 약함). 겹침이 ETH 감쇠 후기(2026 약세) → **동일 182일에 ETH 재측정해 공정 대조 필수**. ETH+SOL 약한 multiple testing.
   - 산출물: research/sol/STAGE1_REPORT.md, characteristics.csv. 코드 sol_characteristics.py.
-- SOL.2 ⬜ 라벨링 (ETH 검증 코드 재사용, SYMBOL=SOLUSDT) → 정확성 → 유사도 → 70% → hit/net. **ETH 도 동일 182일 재측정 병행.**
+- SOL.2 **라벨링→유사도→70%→hit/net + 동일 182일 ETH 대조 ❌ (이 윈도우 양쪽 다 edge 없음)** (2026-06-10):
+  - 파이프라인 전부 SOL 에 그대로 작동 (라벨 47, 축약 SOL 23차원/ETH182 21차원, 정규화 자체 재적합, whitening 각 45일).
+  - **유사도 방향 구조 = 양쪽 존재**: 부호일치 SOL 0.712 / ETH182 0.740 vs random ~0.50 → 방법은 SOL 에 일반화 (닮은 상태=방향 구성 닮음).
+  - **거래 edge = 동일 182일에 SOL·ETH 둘 다 thr0.70 net 음수** (SOL day -17.8 [-120,+67] n=17, ETH182 -7.9 [-35.8,+17.4] n=64). **full-period ETH 스타 4h 가 이 최근 윈도우선 ETH 도 -44.6** (감쇠 확정 — I.5 2026 약세 연장). ETH182 30m 만 +33.9(CI 0제외, n=21) but 6셀중1·full 과 불일치 = regime/노이즈.
+  - 판정: "15bp = ETH 한계냐 방법 한계냐" → **시간/regime 한계** (둘 다 최근 감쇠). SOL 이 "방법 일반·ETH 효율적" 입증 못함. **통계 매우 약함** (182일, n 17~64, CI 거대, whiten 45일). multiple testing.
+  - **함의**: I.5 "4h thr70 약하지만 진짜" 에 경고 — 최근 6개월 ETH 4h 음수 → 감쇠 진행 가능. **shadow 전향이 최종 판정 (선결).** SOL 확장은 새 edge 안 줌.
+  - 산출물: research/sol/STAGE2_REPORT.md, sim_sol/ sim_eth182/ lean_*.parquet. 코드 sol_analyze.py.
+- SOL.3 ⬜ (이 윈도우 ❌ — 단 짧음): SOL 과거 백필(시기 확보) 시 재검 가능. 우선순위 낮음 (shadow 전향 선결).
 
 ### ⬜ 안 가본 큰 가지 (root-level 형제)
 - **틱~초 HFT 영역** (MM tier 영역, latency 인프라 필요) — OBI/dobi 의 native 영역. H.1 도 여기로 수렴(선행=sub-second).
@@ -279,4 +286,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-10 (SOL.1 데이터+인벤토리 ✅ — SOLUSDT 182일(2025-11~2026-05) 이미 보유, 형식 ETH 완전 동일(어댑터 X). 통념 반전: SOL 마이크로 변동성 ≈ ETH(1.07x), 스프레드만 23x(4h 경미), 유동성 충분. 판가름 = kNN edge 가 SOL 에 존재하나. 다음 SOL.2 라벨링(코드 재사용)+ETH 동일182일 재측정. 이전: I.6-5 ETH 운영점 확정)
+**마지막 업데이트**: 2026-06-10 (SOL.2 ❌ — 동일 182일(2025-11~2026-05) SOL·ETH 둘 다 thr0.70 net 음수 (ETH 4h -44.6 = 감쇠 확정). 단 부호일치 양쪽 존재(SOL 0.712/ETH 0.740) = 방법은 일반화. 15bp 는 시간/regime 한계 (양 자산 최근 감쇠), SOL 이 구원 못함. n 극소·통계 약함. 함의: I.5 4h 결론 경고, shadow 전향이 최종판정. 이전: SOL.1 데이터 ✅)
