@@ -23,9 +23,10 @@ import os, glob, json, time
 import numpy as np
 import pandas as pd
 
-OB='/Users/mark/mark19_data/ETHUSDT'
-TR='/Users/mark/mark19_data/trades_perp/ETHUSDT'
-OUT='/Users/mark/Desktop/Mark/mark19/research/i_labeling'
+SYMBOL=os.environ.get('SYMBOL','ETHUSDT')   # SOL 재사용: SYMBOL=SOLUSDT
+OB=f'/Users/mark/mark19_data/{SYMBOL}'
+TR=f'/Users/mark/mark19_data/trades_perp/{SYMBOL}'
+OUT=os.environ.get('LABEL_OUT','/Users/mark/Desktop/Mark/mark19/research/i_labeling')
 os.makedirs(OUT,exist_ok=True)
 
 STEP=int(os.environ.get('STEP','6'))   # 일 subsample (시기 전체 고르게). STEP=6 ~200일

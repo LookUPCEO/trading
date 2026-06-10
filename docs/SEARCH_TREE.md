@@ -229,6 +229,15 @@
   - **수집 공백 백필** (5/1~6/6 — pool·정규화 최신화)
   - **[I] 밖 (root-level 형제)**: 다른 자산(SOL/BTC) 이식성 — 같은 파이프라인 재적용 (사용자 전략 결정) / 타 신호 결합
 
+### [SOL] 유사도 거래 이식 (자산 일반성 검증) — [I] ETH 의 root-level 형제
+핵심 질문: ETH 15bp/day = "ETH 한계" 인가 "방법 한계" 인가. SOL 이 더 강하면 방법 OK(ETH가 효율적이었음), SOL 도 같으면 코인 공통 한계.
+- SOL.1 **데이터+인벤토리 ✅ 토대 OK** (2026-06-10):
+  - SOLUSDT 이미 보유: OB 50레벨 1Hz **2025-11-01~2026-05-01, 182일 연속(공백0)**, trades 동일. ETH 와 겹치는 6개월 (ETH 181/182 커버). **형식 ETH 완전 동일 → 어댑터 불필요** (i_labeling SYMBOL 훅 추가).
+  - 기초특성 (겹치는 12일): **통념 반전 — SOL 마이크로 변동성 ≈ ETH (rv 1.07x)**, 스프레드만 23x (틱/가격; 4h 엔 경미). 유동성 우려 기우 (depth 9.9x, 거래량 $1.3B/day). → "SOL 이 더 거칠어 edge 클 것" 근거 약함. 판가름은 'kNN 방향 edge 가 SOL 에 존재하나'.
+  - ⚠️ caveat: SOL 182일 = 시기 적음 (폴드 1~2, 단독 OOS 약함). 겹침이 ETH 감쇠 후기(2026 약세) → **동일 182일에 ETH 재측정해 공정 대조 필수**. ETH+SOL 약한 multiple testing.
+  - 산출물: research/sol/STAGE1_REPORT.md, characteristics.csv. 코드 sol_characteristics.py.
+- SOL.2 ⬜ 라벨링 (ETH 검증 코드 재사용, SYMBOL=SOLUSDT) → 정확성 → 유사도 → 70% → hit/net. **ETH 도 동일 182일 재측정 병행.**
+
 ### ⬜ 안 가본 큰 가지 (root-level 형제)
 - **틱~초 HFT 영역** (MM tier 영역, latency 인프라 필요) — OBI/dobi 의 native 영역. H.1 도 여기로 수렴(선행=sub-second).
 - **일~주 거시** (펀더멘털, on-chain — OB 너머 데이터)
@@ -270,4 +279,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-10 (I.6-5 thr 소수점 ❌ — 점프 ~0.70 실재(ramp, rolling 곡선 명확), 0.70 미만 평탄노이즈, OOS·일수익 3중 0.70 최선. 빈도 개선 0. 일수익 4.5축 전부 닫힘 = ETH 최종 운영점. shadow 전향 2건(n=2 무의미) 가동중. 다음: shadow 누적/백필/[I]밖(SOL 이식))
+**마지막 업데이트**: 2026-06-10 (SOL.1 데이터+인벤토리 ✅ — SOLUSDT 182일(2025-11~2026-05) 이미 보유, 형식 ETH 완전 동일(어댑터 X). 통념 반전: SOL 마이크로 변동성 ≈ ETH(1.07x), 스프레드만 23x(4h 경미), 유동성 충분. 판가름 = kNN edge 가 SOL 에 존재하나. 다음 SOL.2 라벨링(코드 재사용)+ETH 동일182일 재측정. 이전: I.6-5 ETH 운영점 확정)
