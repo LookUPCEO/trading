@@ -1,8 +1,19 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-14 (I.11 마찰 ✅ 통과 — ETH 0.15%/day 실거래로 옮겨짐(환상 아님). **유일 관문 = 감쇠(shadow)**)
-**Status:** 🔬 [I] in-data 소진 + 마찰 통과 → 실거래 가능성 = 감쇠 여부에만 달림. shadow 전향이 유일 관문. SOL 백필 옵션
+**Last updated:** 2026-06-14 (I.12 라이브 준비 — 안전장치 15/15 PASS(실주문 0). 실주문 전 구멍 3 메우고 별도확인 후)
+**Status:** 🔬 [I] in-data 소진+마찰통과+안전준비. 남은 건 실주문(별도확인)으로 감쇠 실측. shadow 7일째
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🔬 2026-06-14 — I.12: 소액 라이브 준비 (안전장치 15/15 PASS, 실주문 0)
+
+- ⚠️ 점검만, 실주문 0건 (전부 DRY_RUN).
+- 안전장치 preflight 15/15: 1회/총노출/동시 한도, dedupe, kill switch, 4h 청산보장, 손실한도 $60, 출금호출 없음, LIVE_ARM 이중게이트.
+- 인프라: live_bot BybitClient 재사용 (taker place_market/reduce_only 청산/get_position/cancel_all). 신호=i_shadow.Engine(bit-identical). shadow 데몬 hot-patch 안 함(별도 프로세스).
+- 계획: $180 자본, $60/trade ×3, 레버 1, 손실한도 $60, 빈도 0.1~0.3/day → 검증 수개월.
+- **실주문 전 구멍 3**: 주문 retry/부분체결 강화, 라이브 WS 신호→주문 루프 통합, trade-only API 키(출금X 사용자)+testnet. 메우고 별도확인 후 실주문.
+- 감쇠=손실각오($180 한도). 마찰 통과했으나 감쇠면 손실 — 그게 라이브 검증 목적.
 
 ---
 
