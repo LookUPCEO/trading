@@ -26,8 +26,8 @@ STATE = f'{LIVE_DIR}/positions.json'
 
 # ---- 안전 파라미터 (소액) ----
 CAP_TOTAL = float(os.environ.get('CAP_TOTAL', '180'))      # 총 자본 USD
-CAP_PER_TRADE = float(os.environ.get('CAP_PER_TRADE', '60'))  # 1회 명목 USD (≤ 총/3, 동시 최대 3)
-MAX_CONCURRENT = int(os.environ.get('MAX_CONCURRENT', '3'))   # 동시 포지션 (30m/1h/4h 각 1)
+CAP_PER_TRADE = float(os.environ.get('CAP_PER_TRADE', '150')) # 1회 명목 USD (단일 4h, 총 자본 내)
+MAX_CONCURRENT = int(os.environ.get('MAX_CONCURRENT', '1'))   # one-way 퍼프 넷팅 → 단일 포지션(4h). 동시 다방향 불가
 LEVERAGE = float(os.environ.get('LEVERAGE', '1'))             # 레버리지 1 (감쇠 시 손실 확대 방지)
 LOSS_HALT = float(os.environ.get('LOSS_HALT', '60'))         # 누적손실 이 USD 도달 시 중단 (총의 1/3)
 DRY_RUN = os.environ.get('DRY_RUN', 'true').lower() != 'false'
