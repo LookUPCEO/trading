@@ -282,6 +282,14 @@
   - 리허설=Mock(실키/실자금 0, 결정적 전경로). 실 testnet 1회는 사용자 액션(키 후).
   - 실자금 직전 체크리스트: 코드측 전부 ✅, 남은 건 사용자(trade-only 키+실testnet)+arm시 WS 데몬 결합.
   - 산출물: STAGE13_REPORT.md. 코드 i_live_order.py(OrderManager+Mock), i_live_rehearsal.py.
+- I.14 **외부데이터+Kelly+regime (순차) ❌ — 셋 다 단일4h 못 넘음, 0.5% 구조적 불가** (2026-06-14):
+  - 데이터 현실: liquidation/OI 과거 미수집 → 외부 = funding 만.
+  - ① 외부(funding): **신호 파괴** — 21차원+funding kNN hit 0.684→**0.496**(코인플립), test +2.90→-4.24. funding 느린 준상수(8h, 37% 0.0001) → 거리를 funding regime 으로 끌어 방향 유사도 희석. G/H funding 미만 재확인.
+  - ② Kelly: 합의 k≥1 거래 OOS 음수(고정 -28.8%) → Kelly 손실 증폭(full -74.5% maxDD 76% 파산근접). f* n=9 train 24~30x 불안정. 9단계 파산위험 정량 확인.
+  - ③ regime: 고변동 regime in-sample hit↑(rv-hi 0.757) = 묘사(lean=고변동) but 게이트 시 test n=2 (4h 희소→표본 소멸). tradeable 게이트 아님.
+  - 종합: 각 ❌ → 결합 미추구. **0.084%→0.5% 새정보/사이징/regime 어느 경로도 불가.** 단일4h ~0.084%(목표 1/12) = 구조적 천장. edge 진짜(마찰통과)이나 빈도/크기로 못 키움.
+  - 산출물: STAGE14_REPORT.md, ext_*.parquet. 코드 i_ext_label/i_kelly/i_regime.py.
+- **[I] 개선 탐색 전면 소진** (in-data 10축 + 외부 + Kelly + regime). 남은 건 감쇠 판정(shadow/실거래)뿐.
 - I.6 ⬜ (남은 형제들):
   - **shadow 결과 누적 대기** (가동 중 — 2025Q3+ 미확정/진위 선결, 수개월)
   - **수집 공백 백필** (5/1~6/6 — pool·정규화 최신화)
@@ -345,4 +353,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-14 (I.13 실주문 구멍 ①② 메움 — 재시도/부분체결/타임아웃/거부+멱등(리허설 12/12), 신호→주문 루프. 실설계: one-way 넷팅 → 라이브=단일4h(~8.4bp/day, 결합 0.15% 실행불가). 실주문 0(Mock). 남은 건 사용자 trade-only 키+실testnet→별도확인 후 소액. 코드측 준비 완료. 이전: I.12 안전장치)
+**마지막 업데이트**: 2026-06-14 (I.14 외부+Kelly+regime 셋 다 ❌ — ①funding 신호파괴(hit 0.68→0.50) ②Kelly OOS 손실증폭(파산위험) ③regime 게이트 표본소멸(test n=2). 0.084%→0.5% 구조적 불가. 단일4h ~0.084%(목표 1/12)=천장. edge 진짜(마찰통과)이나 빈도/크기로 못 키움. [I] 개선 탐색 전면 소진 — 남은 건 감쇠 판정(shadow/실거래). 이전: I.13 라이브준비)
