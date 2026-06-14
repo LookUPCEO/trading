@@ -269,6 +269,12 @@
   - caveat: 시장충격 미모델(소액엔 무시, ETH $4.4B/day), 지연 1분 가정(실제 더 작음), **감쇠는 별개(shadow 판정)**, SOL 스프레드 23x 크나 edge 없어 무의미.
   - 판정: [I] 는 '백테스트 환상' 아님 — 마찰 통과. 실거래 가능성 = 감쇠 여부에 달림 (shadow 가 유일 관문).
   - 산출물: STAGE11_REPORT.md. 코드 i_friction.py.
+- I.12 **소액 라이브 준비: 인프라+안전장치 점검 ✅ (실주문 0)** (2026-06-14):
+  - 안전장치 **preflight 15/15 PASS** (전부 DRY): 1회/총노출/동시 한도, dedupe, kill switch, 4h 청산보장(deadline 강제청산), 손실한도($60), 출금 호출 없음, LIVE_ARM 이중게이트.
+  - 인프라: live_bot BybitClient 재사용 (taker place_market 진입/reduce_only 청산/get_position/cancel_all). 신호 = i_shadow.Engine (bit-identical 검증). 가동 중 shadow 데몬 hot-patch 안 함(별도 프로세스).
+  - 계획: $180 자본, $60/trade ×3 동시, 레버 1, 손실한도 $60, 빈도 0.1~0.3/day → 검증 수개월.
+  - ⚠️ **실주문 전 구멍 3개**: ①주문 실패/부분체결 retry 강화(현 raise_for_status) ②라이브 WS 신호→주문 루프 통합 ③trade-only API 키(출금X, 사용자)+testnet 리허설. 메우고 별도 확인 후 실주문.
+  - 산출물: STAGE12_REPORT.md, live_bot_state/i_live/. 코드 i_live.py(DRY 기본), i_live_preflight.py.
 - I.6 ⬜ (남은 형제들):
   - **shadow 결과 누적 대기** (가동 중 — 2025Q3+ 미확정/진위 선결, 수개월)
   - **수집 공백 백필** (5/1~6/6 — pool·정규화 최신화)
@@ -332,4 +338,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-14 (I.11 마찰 ✅ 통과 — ETH 4h per-trade +90bp >> 마찰 ~0.3bp(슬립0.05/funding0.17/지연노이즈), taker net +92.5, 일수익 15.1→15.24(test 11.24) 거의 불변. large-move 신호라 마찰<<gross(과거 micro 신호와 다름). 0.15%/day 실거래 옮겨짐=환상 아님. 감쇠만 남음(shadow). in-data 개선 소진+마찰 통과 → 유일 관문=감쇠. 이전: I.10-2)
+**마지막 업데이트**: 2026-06-14 (I.12 라이브 준비 — 안전장치 15/15 PASS(실주문 0), BybitClient+shadow Engine 재사용. 계획 $180/레버1/손실한도$60. 실주문 전 구멍 3(주문 retry강화/WS 신호주문루프 통합/trade-only 키+testnet). 감쇠=손실각오. in-data 소진+마찰통과+안전준비 → 남은 건 실주문(별도확인)으로 감쇠 실측. 이전: I.11 마찰)
