@@ -1,8 +1,18 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-14 (I.10-2 약신호域 보완 ❌ 완전 종결 — fee 넘는 보완 구조적 불가. in-data 개선 완전 소진=[I] 최종형)
-**Status:** 🔬 [I] in-data 개선 완전 소진 (일수익 10축+짝 10-1+약신호 10-2). **shadow 전향(감쇠)이 유일 미해결.** SOL 백필 옵션
+**Last updated:** 2026-06-14 (I.11 마찰 ✅ 통과 — ETH 0.15%/day 실거래로 옮겨짐(환상 아님). **유일 관문 = 감쇠(shadow)**)
+**Status:** 🔬 [I] in-data 소진 + 마찰 통과 → 실거래 가능성 = 감쇠 여부에만 달림. shadow 전향이 유일 관문. SOL 백필 옵션
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🔬 2026-06-14 — I.11: 실거래 마찰 ✅ 통과 — 0.15%/day 환상 아님
+
+- ETH 4h thr0.70 **per-trade +90bp >> 마찰 합계 ~0.3bp** (슬립 0.05 + funding 0.17 + 지연 ±2 노이즈).
+- taker net +92.5/trade, 결합 일수익 **15.1→15.24** (test 8.1→11.24), CI[+28,+123] 유지 — 거의 불변.
+- **구조적 강건**: large-move 방향신호(gross +100bp)라 마찰<<gross. 과거 죽은 micro 신호(OBI +1.3/range-v2 +3.2)는 gross≈마찰이라 maker fill 에 죽었으나 이건 다름.
+- taker 현실적(fill 보장), maker 불필요. caveat: 시장충격 미모델(소액 무시), 감쇠 별개(shadow), SOL 스프레드 크나 edge 無.
+- **판정: [I] 백테스트 환상 아님. 실거래 가능성 = 감쇠 여부에만 달림 — shadow 전향이 유일 관문.**
 
 ---
 
