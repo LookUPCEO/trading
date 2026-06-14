@@ -1,8 +1,19 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-14 (I.13 실주문 구멍 ①② 메움 — 재시도/멱등(리허설 12/12)+신호주문루프. 라이브=단일4h(one-way 넷팅). 실주문 0)
-**Status:** 🔬 [I] 코드측 실거래 준비 완료. 남은 건 사용자(trade-only 키+실testnet)→별도확인 후 소액. shadow 7일째
+**Last updated:** 2026-06-14 (I.14 외부+Kelly+regime 셋 다 ❌ — 0.5% 구조적 불가. 단일4h ~0.084%(목표 1/12)=천장)
+**Status:** 🔬 [I] 개선 탐색 전면 소진 (in-data 10축+외부+Kelly+regime). edge 진짜이나 빈도/크기로 못 키움. 남은 건 감쇠 판정(shadow/실거래)
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+---
+
+## 🔬 2026-06-14 — I.14: 외부+Kelly+regime 셋 다 ❌ (0.5% 구조적 불가)
+
+- 데이터 현실: liquidation/OI 과거 미수집 → 외부 = funding 만.
+- **① 외부(funding)**: 신호 파괴 — 21+funding kNN hit 0.684→**0.496**(코인플립), test +2.90→-4.24. funding 느린 준상수(8h, 37% 0.0001)라 거리를 funding regime 으로 끌어 방향 유사도 희석. G/H 재확인.
+- **② Kelly**: 합의 k≥1 거래 OOS 음수(고정 -28.8%) → Kelly 손실 증폭(full -74.5% maxDD 76% 파산근접). f* n=9 train 24~30x 불안정. 9단계 파산위험 정량 확인.
+- **③ regime**: 고변동 in-sample hit↑(rv-hi 0.757)=묘사(lean=고변동) but 게이트시 test n=2(4h 희소→표본 소멸). tradeable 아님.
+- **판정: 0.084%→0.5% 새정보/사이징/regime 어느 경로도 불가.** 단일4h ~0.084%(목표 1/12)=구조적 천장. edge 진짜(마찰통과)이나 빈도/크기로 못 키움.
+- **[I] 개선 탐색 전면 소진.** 남은 건 감쇠 판정(shadow 9일째/실거래)뿐.
 
 ---
 
