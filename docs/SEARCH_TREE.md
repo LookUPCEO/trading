@@ -345,6 +345,13 @@
   - **arm: DRY_RUN=false LIVE_ARM=yes (PID 48983)** — 매분 fup, thr0.70 발화 시 taker 진입→ledger→4h reduce_only 청산, 매분 reconcile. 안전장치(손실한도 $60/kill/deadline) 활성. **실주문 0건(빈도 ~0.09/일 → 첫 주문 며칠 뒤)**.
   - ⚠️ **stale artifact caveat**: 정규화 윈도우 ~4/30(6주 전) — 현재 vol regime 어긋날 수 있음. 첫 실주문(며칠 뒤) 전 artifact 갱신(수집된 5/1~6/16 데이터) 권장. ⚠️ 자율 실거래 가동 — 머신 sleep 시 중단, 미감시 중 발화 시 안전장치만 의존.
   - 산출물: i_live_daemon.py, shadow/live/(ledger/positions/log).
+- I.23 **stale artifact 갱신 ✅ — 단 June regime ≈ old (stale 영향 작았음)** (2026-06-16):
+  - 현황: 구 norm 1/31~4/30(6주). raw 6/7~6/15 수집됨(공백 5/1~6/6). labels 4/30까지.
+  - **핵심 발견: June(6/7~15) vol regime ≈ 구 norm 윈도우 (rv 0.95~0.98x, bounded 동일)** → stale norm 이 실제로 신호 거의 안 왜곡(우려보다 작았음).
+  - 갱신: 재라벨(1207일, 6/7~15 +9) → reduce_norm 재적합(**reps 동일 21차원, 신호 정의 불변**) → artifact rebuild. **norm 윈도우 2/9~6/15, DB to 6/15(1191일), big_thr 2.51→2.88**. lookahead 0.
+  - 갱신 검증: 새 artifact fup sane(범위 0.38~0.63, votes≥70), edge 정의 불변(reps 동일·과적합 X). 갱신=풀 확장+norm tail 갱신(공백으로 여전히 Feb-Apr 가중).
+  - 라이브 반영: 실주문 0인 지금 안전 교체 — 구 데몬(48983) 클린 종료(orphan 0) → 새 artifact 재arm(PID 49338). 재검증 fup 0.519 signal 0, 에러/KILL 0, ledger 0, reconcile 활성.
+  - 산출물: labels 1207일, labels_norm_reduced(v0430 백업), 새 artifact.
 - I.6 ⬜ (남은 형제들):
   - **shadow 결과 누적 대기** (가동 중 — 2025Q3+ 미확정/진위 선결, 수개월)
   - **수집 공백 백필** (5/1~6/6 — pool·정규화 최신화)
@@ -408,4 +415,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-16 (I.22 ★ 실거래 ARMED — mainnet equity $188.32, 라이브 주문 데몬(검증부품 결합) PID 48983 가동. DRY 배관 검증 후 arm(DRY_RUN=false LIVE_ARM=yes). 실주문 0(빈도 0.09/일 첫주문 며칠뒤). 안전장치 활성(손실한도$60/kill/4h청산/reconcile). caveat: 정규화 6주 stale→첫주문 전 갱신 권장, 자율 실거래(머신 상시가동 필요). 신호 표현 탐색 종료 후 라이브 진입. 이전: I.21-1 DTW)
+**마지막 업데이트**: 2026-06-16 (I.23 artifact 갱신 ✅ — norm 4/30→2/9~6/15, DB to 6/15(1191일), reps 동일(신호 불변). 핵심: June regime ≈ old(rv 0.96x)라 stale 영향 작았음. 라이브 안전 교체(구 48983 클린종료→새 49338 재arm), 실주문 0. 5/1~6/6 공백은 잔존. 감쇠 실측 깨끗한 토대. 이전: I.22 ARMED)
