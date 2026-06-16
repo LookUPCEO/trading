@@ -1,8 +1,21 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-16 (I.21-1 DTW 자기운동장 ❌ — 공평히 봐도 강점 없음. 모양 정보 4회 확인, 신호 표현 탐색 완전 종료)
-**Status:** 🔬 [I] 빈도+거래당+표현(모양/DTW) 전부 소진. 4h 유클리드 단일 최종. 키우는 길=레버리지(16). 감쇠 판정(shadow) 선결
+**Last updated:** 2026-06-16 (I.22 ★ 실거래 ARMED — 라이브 주문 데몬 PID 48983 가동, equity $188 mainnet, 실주문 대기)
+**Status:** 🔥 [I] 실거래 ARMED (1x 소액 $180, 손실한도 $60). 첫 주문 며칠뒤(빈도 0.09/일). 감쇠 실측 시작 = 모든 R&D의 판정
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
+
+⚠️ **운영 주의**: 자율 실거래 가동 중 (PID 48983). 머신 sleep 시 중단. 첫 실주문 전 stale artifact(정규화 6주) 갱신 권장. kill: `touch research/i_similarity/shadow/live/KILL`.
+
+---
+
+## 🔬 2026-06-16 — I.22: ★ 실거래 ARMED (라이브 주문 데몬 가동)
+
+- arm 전 점검: live_bot/.env trade-only 키, **mainnet(TESTNET=false), equity $188.32, 포지션 0**.
+- **i_live_daemon.py = 검증 부품 결합**: 신호 i_shadow.Engine(bit-identical) / 실행 i_live(안전 15/15) / 주문 OrderManager(리허설 12/12). shadow 수집(PID 14414)과 별도·persist 안 함.
+- DRY 배관 검증(라이브 WS): 실시간 fup240(votes 91), signal 0, 에러 0, ledger 0 ($0 위험).
+- **arm: DRY_RUN=false LIVE_ARM=yes (PID 48983)** — 매분 fup, thr0.70 발화시 taker 진입→4h reduce_only 청산, 매분 reconcile. 안전장치(손실한도 $60/kill/deadline) 활성.
+- **실주문 0건** (빈도 ~0.09/일 → 첫 주문 며칠뒤). 첫 체결/슬리피지 실측은 발화 시.
+- ⚠️ **caveat**: 정규화 윈도우 ~4/30(6주 stale)→첫 실주문 전 갱신 권장. 자율 실거래(머신 상시가동 필요). 감쇠 실측 = 모든 R&D의 최종 판정.
 
 ---
 
