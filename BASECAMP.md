@@ -1,10 +1,19 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-16 (I.23 artifact 갱신 — norm 4/30→6/15, June regime ≈ old. 라이브 새 artifact 재arm PID 49338)
-**Status:** 🔥 [I] 실거래 ARMED (PID 49338, 새 artifact). 실주문 대기(빈도 0.09/일). 감쇠 실측 = 최종 판정
+**Last updated:** 2026-06-17 (I.24 hold 분단위/조건부 ❌ — 과적합, 4h 정각 재확정. 라이브 49338 유지)
+**Status:** 🔥 [I] 실거래 ARMED (PID 49338, 4h 정각·thr0.70·단일·1x). 실주문 대기. hold 축 소진. 감쇠 실측 = 최종 판정
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
 
 ⚠️ **운영 주의**: 자율 실거래 (PID 49338, $180/레버1/손실한도$60). 머신 sleep 시 중단. kill: `touch research/i_similarity/shadow/live/KILL`. shadow 수집 PID 14414 별도.
+
+---
+
+## 🔬 2026-06-17 — I.24: hold 분단위/조건부 ❌ (과적합, 4h 정각 재확정)
+
+- A 분단위(3h~5h, 13 hold): train net 5h까지 단조↑(+62→+107)=2024-25 강세 drift 과적합. OOS: train최적 5h → test +50.6 < **4h test +51.8**. Bonferroni 13, OOS 4h 못 넘음.
+- B 조건부: 신호별 hold 차등 없음(강/약/고변동 전부 긴 hold=drift). 조건부 룰 test +46.1 < 고정 4h +51.8.
+- train '긴 hold=더 많은 net'은 강세 drift 유산, OOS(약세) 미전이. 6-1/6-2 'winners run=4h 고정 최선'·19 비단조 재확인.
+- **4h 정각 재확정. hold 축 소진. 운영점 4h·thr0.70·단일·1x 불변.** 라이브 49338 유지(검증만, 즉시교체 X).
 
 ---
 
