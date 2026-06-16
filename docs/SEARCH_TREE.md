@@ -338,6 +338,13 @@
   - "모양 정보" 4회 확인 (8 redundant/18 희석/21 4h비정렬/21-1 자기운동장 무용) — 모양·경로·워핑은 변동성엔 약하게 정렬되나 방향엔 순간 21차원 못 이김.
   - 4h 유클리드 순간상태 최종, DTW 종결, 신호 표현 탐색 완전 종료.
   - 산출물: STAGE21_1_REPORT.md. 코드 i_dtw_turf.py.
+- I.22 **라이브 arm + 첫 주문 — ★ 실거래 ARMED (실주문 대기)** (2026-06-16):
+  - arm 전 점검: live_bot/.env trade-only 키 로드(값 X), **mainnet(TESTNET=false), equity $188.32, 포지션 0**. read-only get_wallet_equity 성공.
+  - 라이브 주문 데몬 i_live_daemon.py = 검증 부품 결합 (신호 i_shadow.Engine bit-identical / 실행 i_live 안전장치 15/15 / 주문 OrderManager 12/12). shadow 수집 데몬(PID 14414)과 별도 프로세스·persist 안 함(충돌 X).
+  - DRY 배관 검증(라이브 WS): 실시간 fup240 계산(votes 91), signal 0, minute_close 에러 0, ledger 0 ($0 위험).
+  - **arm: DRY_RUN=false LIVE_ARM=yes (PID 48983)** — 매분 fup, thr0.70 발화 시 taker 진입→ledger→4h reduce_only 청산, 매분 reconcile. 안전장치(손실한도 $60/kill/deadline) 활성. **실주문 0건(빈도 ~0.09/일 → 첫 주문 며칠 뒤)**.
+  - ⚠️ **stale artifact caveat**: 정규화 윈도우 ~4/30(6주 전) — 현재 vol regime 어긋날 수 있음. 첫 실주문(며칠 뒤) 전 artifact 갱신(수집된 5/1~6/16 데이터) 권장. ⚠️ 자율 실거래 가동 — 머신 sleep 시 중단, 미감시 중 발화 시 안전장치만 의존.
+  - 산출물: i_live_daemon.py, shadow/live/(ledger/positions/log).
 - I.6 ⬜ (남은 형제들):
   - **shadow 결과 누적 대기** (가동 중 — 2025Q3+ 미확정/진위 선결, 수개월)
   - **수집 공백 백필** (5/1~6/6 — pool·정규화 최신화)
@@ -401,4 +408,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-16 (I.21-1 DTW 자기운동장 ❌ — 공평히 봐도 horizon(5m~4h 전부 ≤유클리드)/변동성(동률)/강일치(방향 0.510, smoke 0.579는 노이즈) 강점 없음. 강일치→|4h|↑는 변동성(B branch). 모양 정보 4회 확인 — 시간적 모양은 방향에 순간 21차원 못 이김. 4h 유클리드 최종, 신호 표현 탐색 완전 종료. 키우는 길=레버리지(16), 감쇠 판정(shadow) 선결. 이전: I.21 DTW)
+**마지막 업데이트**: 2026-06-16 (I.22 ★ 실거래 ARMED — mainnet equity $188.32, 라이브 주문 데몬(검증부품 결합) PID 48983 가동. DRY 배관 검증 후 arm(DRY_RUN=false LIVE_ARM=yes). 실주문 0(빈도 0.09/일 첫주문 며칠뒤). 안전장치 활성(손실한도$60/kill/4h청산/reconcile). caveat: 정규화 6주 stale→첫주문 전 갱신 권장, 자율 실거래(머신 상시가동 필요). 신호 표현 탐색 종료 후 라이브 진입. 이전: I.21-1 DTW)
