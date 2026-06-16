@@ -1,10 +1,20 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-16 (I.22 ★ 실거래 ARMED — 라이브 주문 데몬 PID 48983 가동, equity $188 mainnet, 실주문 대기)
-**Status:** 🔥 [I] 실거래 ARMED (1x 소액 $180, 손실한도 $60). 첫 주문 며칠뒤(빈도 0.09/일). 감쇠 실측 시작 = 모든 R&D의 판정
+**Last updated:** 2026-06-16 (I.23 artifact 갱신 — norm 4/30→6/15, June regime ≈ old. 라이브 새 artifact 재arm PID 49338)
+**Status:** 🔥 [I] 실거래 ARMED (PID 49338, 새 artifact). 실주문 대기(빈도 0.09/일). 감쇠 실측 = 최종 판정
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
 
-⚠️ **운영 주의**: 자율 실거래 가동 중 (PID 48983). 머신 sleep 시 중단. 첫 실주문 전 stale artifact(정규화 6주) 갱신 권장. kill: `touch research/i_similarity/shadow/live/KILL`.
+⚠️ **운영 주의**: 자율 실거래 (PID 49338, $180/레버1/손실한도$60). 머신 sleep 시 중단. kill: `touch research/i_similarity/shadow/live/KILL`. shadow 수집 PID 14414 별도.
+
+---
+
+## 🔬 2026-06-16 — I.23: stale artifact 갱신 (단 June regime ≈ old)
+
+- 구 norm 1/31~4/30(6주). raw 6/7~6/15 수집(공백 5/1~6/6).
+- **핵심: June(6/7~15) vol regime ≈ 구 norm (rv 0.95~0.98x, bounded 동일)** → stale norm 신호 거의 안 왜곡(우려보다 작았음).
+- 갱신: 재라벨(1207일) → reduce_norm(reps 동일 21차원, 신호 불변) → artifact rebuild. **norm 2/9~6/15, DB to 6/15, big_thr 2.51→2.88**.
+- 라이브 안전 교체(실주문 0): 구 48983 클린종료(orphan 0) → 새 artifact 재arm PID 49338. 재검증 fup 0.519, 에러/KILL/ledger 0.
+- 5/1~6/6 공백 잔존. 감쇠 실측의 깨끗한 토대 마련.
 
 ---
 
