@@ -352,6 +352,12 @@
   - 갱신 검증: 새 artifact fup sane(범위 0.38~0.63, votes≥70), edge 정의 불변(reps 동일·과적합 X). 갱신=풀 확장+norm tail 갱신(공백으로 여전히 Feb-Apr 가중).
   - 라이브 반영: 실주문 0인 지금 안전 교체 — 구 데몬(48983) 클린 종료(orphan 0) → 새 artifact 재arm(PID 49338). 재검증 fup 0.519 signal 0, 에러/KILL 0, ledger 0, reconcile 활성.
   - 산출물: labels 1207일, labels_norm_reduced(v0430 백업), 새 artifact.
+- I.24 **hold 분단위(A)+신호별 조건부(B) ❌ — 둘 다 과적합, 4h 정각 재확정** (2026-06-17):
+  - A 분단위(3h~5h, 13 hold): train net 5h까지 단조↑(+62→+107)=2024-25 강세 drift 과적합. OOS: train최적 5h → test +50.6 < **4h test +51.8**. Bonferroni 13, 어느 분단위도 OOS 4h 못 넘음.
+  - B 조건부: 신호별 hold 차등 없음(강/약/고변동 전부 긴 hold 선호=drift). 조건부 룰 test +46.1 < 고정 4h +51.8 (CI 0포함, 오히려 나쁨).
+  - train '긴 hold=더 많은 net'은 강세 drift 유산, OOS(약세) 미전이. 6-1/6-2 'winners run 끝까지=4h 고정 최선'·19 비단조 재확인.
+  - 라이브(PID 49338) 4h 정각 유지(검증만, 즉시교체 X). hold 축 소진. 운영점 불변.
+  - 산출물: STAGE24_REPORT.md. 코드 i_hold.py.
 - I.6 ⬜ (남은 형제들):
   - **shadow 결과 누적 대기** (가동 중 — 2025Q3+ 미확정/진위 선결, 수개월)
   - **수집 공백 백필** (5/1~6/6 — pool·정규화 최신화)
@@ -415,4 +421,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-16 (I.23 artifact 갱신 ✅ — norm 4/30→2/9~6/15, DB to 6/15(1191일), reps 동일(신호 불변). 핵심: June regime ≈ old(rv 0.96x)라 stale 영향 작았음. 라이브 안전 교체(구 48983 클린종료→새 49338 재arm), 실주문 0. 5/1~6/6 공백은 잔존. 감쇠 실측 깨끗한 토대. 이전: I.22 ARMED)
+**마지막 업데이트**: 2026-06-17 (I.24 hold 분단위/조건부 ❌ — train net 5h까지↑이나 2024-25 drift 과적합, OOS 4h(+51.8) 못 넘음(5h +50.6). 신호별 hold 차등 없음. 4h 정각 재확정(6-1/6-2 winners-run·19 비단조 일관). hold 축 소진, 운영점 4h·thr0.70·단일·1x 불변. 라이브 49338 유지. 이전: I.23 artifact 갱신)
