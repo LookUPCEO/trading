@@ -1,10 +1,20 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-17 (I.24 hold 분단위/조건부 ❌ — 과적합, 4h 정각 재확정. 라이브 49338 유지)
-**Status:** 🔥 [I] 실거래 ARMED (PID 49338, 4h 정각·thr0.70·단일·1x). 실주문 대기. hold 축 소진. 감쇠 실측 = 최종 판정
+**Last updated:** 2026-06-17 (I.25 방향별 최적 horizon ❌ — 비대칭 진짜이나 거래화 불가, 롱/숏 둘 다 최적=4h. 라이브 49338 유지)
+**Status:** 🔥 [I] 실거래 ARMED (PID 49338, 4h 정각·thr0.70·단일·1x). 실주문 대기. 빈도·일수익 개선축 전부 소진. 감쇠 실측 = 최종 판정
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
 
 ⚠️ **운영 주의**: 자율 실거래 (PID 49338, $180/레버1/손실한도$60). 머신 sleep 시 중단. kill: `touch research/i_similarity/shadow/live/KILL`. shadow 수집 PID 14414 별도.
+
+---
+
+## 🔬 2026-06-17 — I.25: 방향별 최적 horizon (롱/숏 비대칭) ❌ (비대칭 진짜·거래화 불가)
+
+- 방법: 기존 per_query 2파일 병합(추가검색X), up-lean fup>=.70/down-lean fup<=.30, net=dir*frq-fee, train→test OOS, Bonferroni 방향2×horizon12=24.
+- **엘리베이터 가설 부분진실**: down 단기(15~20m) hit 0.667/0.652 > up 0.583/0.588 = "하락 빠름" 실재. **but 거래불가** — down 단기 전부 gross<fee(작은 움직임, fee/|move| 벽) + OOS 불안정(15m tr0.72→te0.50).
+- down 비단조: 단기 hit>0.5 → 2~3h **역신호(0.31/0.33, gross -61/-16)** → 4h 0.765 but **test n=4 판정불능**. up 4h 단조 최적(+98.7).
+- **둘 다 train 최적=4h** → 방향분리=현행 4h합산 동일(롱4h/숏4h, test +51.8bp/day, one-way 충돌 0). **빈도·일수익 개선 0.** Bonferroni-24 OOS 생존 0.
+- 4/5(fee벽)/20(down 약함)/9~10 일관 — 방향 나눠도 edge 는 강합의·큰움직임(4h)에만. **4h 양방향 합산 재확정.** 라이브 49338 유지(검증만).
 
 ---
 
