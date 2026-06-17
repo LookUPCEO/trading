@@ -27,7 +27,8 @@ K_CAND = 1000
 N_IND = 100
 EXCL_DAYS = 3
 MIN_VOTES = 70
-Q_STRIDE = 10
+Q_STRIDE = int(os.environ.get('Q_STRIDE', '10'))
+Q_OFFSET = int(os.environ.get('Q_OFFSET', '5'))
 rng = np.random.default_rng(11)
 
 def greedy_h(order_days, order_mins, h, n_target):
@@ -90,7 +91,7 @@ def main():
         base_cum[hname] = (np.cumsum(np.bincount(drow, up * va, minlength=len(days))),
                            np.cumsum(np.bincount(drow, va, minlength=len(days))))
 
-    q_mask = (yr >= 2024) & (mod % Q_STRIDE == 5)
+    q_mask = (yr >= 2024) & (mod % Q_STRIDE == Q_OFFSET % Q_STRIDE)
     qs = np.where(q_mask)[0]
     qmax = int(os.environ.get('QMAX', '0'))
     if qmax: qs = qs[rng.choice(len(qs), qmax, replace=False)]; qs.sort()
