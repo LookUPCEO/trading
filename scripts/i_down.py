@@ -21,13 +21,21 @@ def dayci(qd,net,seed=7):
     return dm.mean(),np.percentile(bs,2.5),np.percentile(bs,97.5)
 
 def greedy_indep(mod,qday,h):
-    """같은 day 내 |Δmin|>=h 만 독립 채택 (강도순 입력 가정). bool mask 반환."""
+    """같은 day 내 |Δmin|>=h 만 독립 채택. ⚠️ 반드시 시간순(causal) 입력 — 강도순은
+    '미래 더 강한 신호 보고 현재 스킵'=선택 lookahead(거래불가)이라 양수 인공물 발생.
+    bool mask 반환 (입력 순서 기준)."""
     acc={};keep=np.zeros(len(mod),bool)
     for i in range(len(mod)):
         d=qday[i];m=mod[i];lst=acc.get(d)
         if lst is None: acc[d]=[m];keep[i]=True;continue
         if all(abs(m-mm)>=h for mm in lst): lst.append(m);keep[i]=True
     return keep
+
+def indep_causal(L,h):
+    """시간순(day,mod) 독립 subset = 거래가능 규칙(먼저 온 신호 take, 이후 h분 블록)."""
+    o=np.lexsort((L['mod'].to_numpy(),L.qday.to_numpy()))
+    keep=greedy_indep(L['mod'].to_numpy()[o],L.qday.to_numpy()[o],h)
+    return L.iloc[o[keep]]
 
 def main():
     R=pd.read_parquet(PARQ)
@@ -45,9 +53,8 @@ def main():
             m=(s[f'{h}_fup']<=thr).to_numpy()
             L=s[m].copy()
             if len(L)==0: line+=f"{'0/0':>16} | ";continue
-            stg=(0.5-L[f'{h}_fup']).to_numpy();o=np.argsort(-stg)
-            keep=greedy_indep(L['mod'].to_numpy()[o],L.qday.to_numpy()[o],HMIN[h])
-            line+=f"{len(L):>6}/{keep.sum():<6} | "
+            Li=indep_causal(L,HMIN[h])
+            line+=f"{len(L):>6}/{len(Li):<6} | "
         print(line)
     print("  ↑ 임계완화로 all n 급증하나 독립 n(=고유 down 에피소드)은? 강세장서 구조적 한계")
 
@@ -61,9 +68,7 @@ def main():
             if len(L)<5: continue
             frq=L[f'{h}_frq'].to_numpy();net=(-1)*frq*1e4-FEE
             L=L.assign(net=net,hit=(frq<0))
-            stg=(0.5-L[f'{h}_fup']).to_numpy();o=np.argsort(-stg)
-            keep=greedy_indep(L['mod'].to_numpy()[o],L.qday.to_numpy()[o],HMIN[h])
-            Li=L.iloc[o[keep]]   # 독립 부분집합
+            Li=indep_causal(L,HMIN[h])   # 시간순 독립 = 거래가능
             te=~Li.quarter.isin(TRAIN_Q);Lte=Li[te]
             dm,lo,hi=dayci(Lte.qday.to_numpy(),Lte.net.to_numpy())
             g=(Li.net+FEE).mean()
@@ -76,8 +81,7 @@ def main():
     h='4h';ok=(R[f'{h}_n']>=MINV)&~R[f'{h}_frq'].isna()&(R[f'{h}_frq']!=0)
     s=R[ok];L=s[s[f'{h}_fup']<=0.30].copy()
     frq=L[f'{h}_frq'].to_numpy();L=L.assign(net=(-1)*frq*1e4-FEE,hit=(frq<0))
-    stg=(0.5-L['4h_fup']).to_numpy();o=np.argsort(-stg)
-    keep=greedy_indep(L['mod'].to_numpy()[o],L.qday.to_numpy()[o],240);Li=L.iloc[o[keep]]
+    Li=indep_causal(L,240)
     te=~Li.quarter.isin(TRAIN_Q)
     dm,lo,hi=dayci(Li[te].qday.to_numpy(),Li[te].net.to_numpy())
     dmf,lof,hif=dayci(Li.qday.to_numpy(),Li.net.to_numpy())
