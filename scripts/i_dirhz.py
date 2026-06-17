@@ -144,5 +144,29 @@ def main():
     print(f"  one-way 충돌(같은날 롱&숏 둘다): {len(overlap)}일 / 롱{len(udays)} 숏{len(ddays)} — {'겹침 적음(실행가능)' if len(overlap)<=2 else '겹침 주의'}")
     print(f"\n  현행 단일 4h 합산 일수익 ≈ 8.1bp/day(test) 기준. 방향분리가 넘나 = 위 비교.")
 
+    print("\n===== 작업4-심화: down 단기 horizon 정밀 (엘리베이터 가설 핵심) =====")
+    print("  down 단기서 hit>0.5 — 방향은 맞나 net 은? gross vs fee? OOS 유지?")
+    for h in ['10m','15m','20m','30m','1h']:
+        E=grid[(h,'down')]
+        Etr=E[tr_mask(E)];Ete=E[~tr_mask(E)]
+        g=(E.net+FEE).mean()
+        dm,lo,hi=dayci(E.qday.to_numpy(),E.net.to_numpy())
+        htr=Etr.hit.mean() if len(Etr) else np.nan
+        hte=Ete.hit.mean() if len(Ete) else np.nan
+        print(f"  down {h:>3}: n={len(E):>3} hit{E.hit.mean():.3f}(tr{htr if not np.isnan(htr) else 0:.2f}/te{hte if not np.isnan(hte) else 0:.2f}) "
+              f"gross{g:+.1f} net{E.net.mean():+.1f} dayCI[{lo:+.0f},{hi:+.0f}] {'fee초과' if g>FEE else 'fee미달'}")
+    print("\n  ↑ down 단기 hit>0.5(방향 맞음=엘리베이터 일부 진실) but gross<fee(작은 움직임) → 거래불가?")
+
+    print("\n  down 2~3h 붕괴 (hit<0.5, 방향 역전?):")
+    for h in ['2h','3h']:
+        E=grid[(h,'down')]
+        print(f"  down {h}: n={len(E)} hit {E.hit.mean():.3f} gross {(E.net+FEE).mean():+.1f} (역신호?)")
+
+    print("\n  up vs down 방향정확도 비교 (같은 horizon, 단기서 down 이 더 정확?):")
+    for h in ['10m','15m','20m','30m','1h']:
+        u=grid[(h,'up')];d=grid[(h,'down')]
+        print(f"  {h:>3}: up hit {u.hit.mean():.3f}(n{len(u)}) | down hit {d.hit.mean():.3f}(n{len(d)}) "
+              f"{'← down 우세' if d.hit.mean()>u.hit.mean() else ''}")
+
 if __name__=='__main__':
     main()
