@@ -40,8 +40,21 @@ def build():
     return dict(nrm=nrm,X=X,xsq=xsq,drow=drow,mod=mod,yr=yr,qtr=qtr,starts=starts,FR=FR,n=n,reps=reps,
                 C=C,mu=mu,W=W)
 
+def greedy_h(order_days, order_mins, h, n_target):
+    """검증된 이웃 독립 (lean70_v2 동일): 같은 day |Δ|<h 거부, 거리순 채움 N개."""
+    acc={};out=[]
+    for i in range(len(order_days)):
+        d=order_days[i];m=order_mins[i];lst=acc.get(d)
+        if lst is not None:
+            if any(abs(m-mm)<h for mm in lst): continue
+            lst.append(m)
+        else: acc[d]=[m]
+        out.append(i)
+        if len(out)>=n_target: break
+    return out
+
 def search(D, qs, FRsel=None):
-    """qs 쿼리들에 대해 horizon별 이웃 down 합의 fup + 쿼리 자기 미래 반환."""
+    """qs 쿼리×horizon: 검증된 greedy_h 이웃선택(horizon별)으로 down 합의 fup + 쿼리 미래."""
     X,xsq,drow,mod,starts,FR=D['X'],D['xsq'],D['drow'],D['mod'],D['starts'],(FRsel or D['FR'])
     recs=[];BLK=128
     from time import time as _t;t0=_t()
@@ -55,16 +68,11 @@ def search(D, qs, FRsel=None):
             if e<50000: continue
             row=d2[j,:e];kc=min(K_CAND,e-1)
             cand=np.argpartition(row,kc)[:kc];order=cand[np.argsort(row[cand])]
-            # day-dedupe top-N 이웃 (한 day 1표 = 미래 독립)
-            seen=set();picks=[]
-            for i in order:
-                dd=drow[i]
-                if dd in seen: continue
-                seen.add(dd);picks.append(i)
-                if len(picks)>=N_NB: break
-            picks=np.array(picks)
+            od,om=drow[order],mod[order]
             rec=dict(q=int(q),qday=int(drow[q]),mod=int(mod[q]),qtr=D['qtr'][q])
             for hn in HZ:
+                sel=greedy_h(od,om,HZ[hn],N_NB)   # horizon별 이웃 독립 (검증 방식)
+                picks=order[sel]
                 v=FR[hn][picks];v=v[~np.isnan(v)];v=v[v!=0]
                 rec[f'{hn}_n']=len(v)
                 rec[f'{hn}_fup']=(v>0).mean() if len(v) else np.nan
