@@ -1,11 +1,19 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-28 (운영점검 — shadow 건강(outcome 6건 hit 0.83), 단 실거래 데몬 주문 실행 깨짐(버그2): 신호 3건 전부 실패, 실주문 0=실행불가(돈손실0 failed safe). 수정 대기)
-**Status:** 🔥 [I] 실거래 데몬 ARMED 이나 ★주문 실행 깨짐★ (PID 49338, qty step/get_order_by_link 버그 — 신호 3건 미체결). shadow(PID 14414) 정상 누적. 감쇠 = shadow 가 주도구
+**Last updated:** 2026-06-28 (I.29 실거래 버그 수정+리허설 강화+재arm ✅ — qty quantize/멱등 메서드 수정, 리허설 21/21 실제약 검증, 구 49338→수정본 PID 54043 ARMED. 다음 신호 실주문 모니터)
+**Status:** 🔥 [I] 실거래 ARMED 수정본 (PID 54043, 4h 정각·thr0.70·단일·1x, qty quantize 적용). shadow(PID 14414) 정상 누적(outcome 6건 hit 0.83). 감쇠 = shadow 주도구 + 이제 실거래도 체결 가능
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
 
-⚠️ **운영 주의**: 실거래 데몬(PID 49338) ARMED 이나 주문 버그로 실체결 0(돈 안 나감). 수정 전엔 실거래 누락 지속. shadow(PID 14414) 정상. sleep 비활성(잠 안 듦). auto-restart 없음. kill: `touch research/i_similarity/shadow/live/KILL`.
-⚠️ **미수정 버그(2026-06-28 점검, 사용자 확인 후 조치)**: ① i_live_daemon.py:50 qty=round(.,3)→step 0.01 위반(Qty invalid) ② BybitClient.get_order_by_link 부재(멱등 무력). 리허설 12/12 는 Mock 괴리로 통과했던 것.
+⚠️ **운영 주의**: 실거래 데몬 **PID 54043**(수정본, ARMED, $180/레버1/$60손실한도/CAP$60per trade). 다음 thr0.70 신호 시 실주문(~$48 명목) 나감 — 첫 체결 모니터. shadow PID 14414 별도. sleep 비활성. auto-restart 없음(재부팅 시 수동 재기동). kill: `touch research/i_similarity/shadow/live/KILL`.
+
+---
+
+## 🔧 2026-06-28 — I.29: 실거래 버그 수정 + 리허설 강화 + 재arm ✅
+
+- 점검 발견 버그 2개 수정: **#2(치명)** qty round(.,3)=0.035 step 위반 → `quantize_qty()` step floor(한도초과 방지)+minQty/minNotional(실 명세 qtyStep 0.01/minQty 0.01/minNotional 5). **#1(잠복)** `get_order_by_link` 실 BybitClient 추가(realtime→history)+`get_instrument_spec`. daemon 기동 spec fetch, place_entry quantize.
+- **리허설 강화(I.13 거짓통과 재발 방지)**: Mock 이 실 step/min 검증(0.035 거부)+인터페이스 정합(실 클라 메서드 완비, get_wallet_equity 누락도 잡아 추가)+과거 실패 3건 재현. **21/21 PASS**(12→21), preflight 15/15.
+- 검증: 실 API spec fetch 정상, 과거 3건(6/19숏·6/25롱·6/28숏) 모두 qty 0.03 명목 $47~51 valid. 재arm 전 거래소 포지션 **0**·equity **$188.32 불변**(체결 0 failed safe 확인).
+- **재arm**: 구 49338 클린종료(orphan 0, shadow 14414 무영향) → 수정본 **PID 54043 ARMED**(DRY=False ARM=True, spec 로깅, WS 연결, KILL 없음, ledger 0). 다음 thr0.70 신호 시 실주문 모니터.
 
 ---
 

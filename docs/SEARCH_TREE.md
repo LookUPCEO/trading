@@ -401,6 +401,12 @@
   - **GBM(28 AUC 0.51)·kNN(28-1 정렬 0.00) 두 방법 일치** → 하락 예측불가는 모델 탓 아님. 큰 하락 발생은 사전 미시상태와 무관(돌발).
   - 하락 분기 6단계 모두 ❌(25→26→27→27-1→28→28-1, 방법·라벨·horizon·임계 전 축). 유일 미탐: 청산/OI(H ⬜). **4h 양방향 합산 재확정.** 라이브 49338 유지.
   - 산출물: STAGE28_1_REPORT.md. 코드 i_downknn.py.
+- I.29 **실거래 데몬 버그 수정 + 리허설 강화 ✅ — 재arm 정상** (2026-06-28):
+  - 점검(6/28) 발견 버그 2개 수정: **#2(치명)** qty=round(.,3)=0.035 → Bybit step 0.01 위반 → `quantize_qty()` step floor(한도 초과 방지)+minQty/minNotional 검증(실 명세 qtyStep 0.01/minQty 0.01/minNotional 5/tick 0.01). **#1(잠복)** `get_order_by_link` 실 BybitClient 부재 → realtime→history 조회 추가(+get_instrument_spec). daemon 기동시 spec fetch(fallback), place_entry 가 quantize 사용.
+  - **리허설 강화(I.13 거짓통과 재발 방지)**: Mock 이 실 step/minQty/minNotional 실제 검증(0.035 거부) + 인터페이스 정합(실 클라 메서드 완비 — get_wallet_equity 누락도 잡아 추가) + 과거 실패 3건 재현 valid 확인. **21/21 PASS**(구 12→21), preflight 15/15 유지.
+  - 검증: 실 API spec fetch 정상, 과거 실패 3건(6/19숏·6/25롱·6/28숏) 모두 qty=0.03 명목 $47~51 valid. 재arm 전 거래소 포지션 0·equity $188.32 불변(failed safe 확인).
+  - **재arm**: 구 49338 클린 종료(orphan 0, shadow 14414 무영향) → 수정본 **PID 54043 ARMED**(DRY=False ARM=True, spec 로깅, WS 연결, KILL 없음, ledger 0). 다음 thr0.70 신호 시 실주문 모니터.
+  - 산출물: OPS_CHECK 후속. 코드 i_live_order.py(quantize_qty/Mock 강화), execution.py(get_order_by_link/get_instrument_spec), i_live_daemon.py, i_live_rehearsal.py.
 - I.6 ⬜ (남은 형제들):
   - **shadow 결과 누적 대기** (가동 중 — 2025Q3+ 미확정/진위 선결, 수개월)
   - **수집 공백 백필** (5/1~6/6 — pool·정규화 최신화)
@@ -464,4 +470,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-28 (운영점검 — shadow 건강(outcome 6건 hit 0.83, 공백0, 감쇠 주도구 정상). 단 ★실거래 데몬 주문 실행 깨짐★: 신호 3건(6/19숏·6/25롱0.73·6/28숏) 전부 실패 — qty round(.,3) step 0.01 위반(Qty invalid) + get_order_by_link 실클라 부재(멱등 무력). 돈 손실 0(체결0 failed safe), 6/25 롱 핵심 edge 포함 누락. 리허설 12/12 는 Mock 괴리로 통과했음. 수정(qty round.2+메서드 추가+재arm)은 사용자 확인 후. sleep 비활성/auto-restart 없음. 산출물 OPS_CHECK_2026-06-28.md. 이전: I.28-1 하락 특화 라벨 + kNN(우리 진짜 방법) ❌ — 본인 지적(27/28 은 GBM, 우리는 kNN) 타당해 28 하락 라벨을 kNN 으로 다시. 정렬도 = 이웃 down합의 ↔ 실제 down corr −0.001~−0.002 ≈0(상승 kNN 부호일치 0.78 과 극명 대조). 3 공간(21거울/하락10/21+10) 전부 net 음수·Bonf 생존 0. GBM(AUC 0.51)·kNN(정렬 0.00) 일치 → 하락 예측불가는 방법·라벨 무관, 시장 본질(큰 하락=사전 미시상태와 무관, 돌발). 하락 6단계 전부 ❌(25→26→27→27-1→28→28-1). 유일 미탐 청산/OI(H ⬜). 4h 양방향 합산 재확정. 라이브 49338 유지. 이전: I.28 하락 특화 라벨 GBM ❌)
+**마지막 업데이트**: 2026-06-28 (I.29 실거래 버그 수정+리허설 강화+재arm ✅ — 점검서 찾은 버그2 수정: qty quantize_qty(step floor, 실명세 qtyStep 0.01) + get_order_by_link/get_instrument_spec 실클라 추가. 리허설 강화(Mock 실 step/min/인터페이스 검증, 0.035 거부, get_wallet_equity 누락도 잡음) 21/21 PASS, preflight 15/15. 과거 실패 3건 재현 valid(qty 0.03). 재arm 전 거래소 포지션 0·equity $188.32 불변(failed safe). 구 49338 클린종료→수정본 PID 54043 ARMED(spec 로깅·WS·KILL 없음·ledger 0). 다음 신호 실주문 모니터. shadow 14414 무영향. 이전: 운영점검 ❌(주문 깨짐 발견) — 본인 지적(27/28 은 GBM, 우리는 kNN) 타당해 28 하락 라벨을 kNN 으로 다시. 정렬도 = 이웃 down합의 ↔ 실제 down corr −0.001~−0.002 ≈0(상승 kNN 부호일치 0.78 과 극명 대조). 3 공간(21거울/하락10/21+10) 전부 net 음수·Bonf 생존 0. GBM(AUC 0.51)·kNN(정렬 0.00) 일치 → 하락 예측불가는 방법·라벨 무관, 시장 본질(큰 하락=사전 미시상태와 무관, 돌발). 하락 6단계 전부 ❌(25→26→27→27-1→28→28-1). 유일 미탐 청산/OI(H ⬜). 4h 양방향 합산 재확정. 라이브 49338 유지. 이전: I.28 하락 특화 라벨 GBM ❌)

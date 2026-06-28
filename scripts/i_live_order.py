@@ -138,4 +138,6 @@ class MockBybitClient:
         return self.orders.get(link_id)
     def get_position(self):
         return {'size': str(abs(self.position)), 'side': 'Buy' if self.position >= 0 else 'Sell'}
+    def get_wallet_equity(self):
+        return 188.32   # 리허설용 고정 (실 클라 인터페이스 정합)
     def cancel_all(self): return {'retCode': 0}
