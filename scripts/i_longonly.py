@@ -52,6 +52,19 @@ def main():
                     te_daily=T.net.sum()/max(nd_te,1),te_lo=lo,te_hi=hi)
         return Li,full
 
+    # 방법론 정합 (진입타이밍/stride 민감도) — 정직성: dense-causal=라이브 실제 방식
+    print("\n===== 방법론 정합: A stride-10(검증op-pt) / B dense무dedup / C dense-causal(=라이브) =====")
+    A=pd.read_parquet(f'{OUT}/lean70_v2_per_query.parquet')
+    okA=(A['4h_n']>=70)&~A['4h_frq'].isna()&(A['4h_frq']!=0);sA=A[okA]
+    def quick(df,longside):
+        m=(df['4h_fup']>=.70) if longside else (df['4h_fup']<=.30)
+        L=df[m];dirn=1 if longside else -1;net=dirn*L['4h_frq'].to_numpy()*1e4-FEE
+        return len(L),(dirn*L['4h_frq'].to_numpy()>0).mean(),net.mean()
+    for nm,ls in [('롱',True),('숏',False)]:
+        a=quick(sA,ls);b=quick(s,ls)
+        print(f"  {nm}: A stride10 n{a[0]} hit{a[1]:.3f} {a[2]:+.1f} | B dense무dedup n{b[0]} hit{b[1]:.3f} {b[2]:+.1f}")
+    print("  (C dense-causal=아래 작업1. A 숏 +60.9 n17=플룩, B 숏 음수 n249. 진입 earliest-cross 가 신호 약화)")
+
     Llong,fl=stratum((s['4h_fup']>=.70).to_numpy(),'롱')
     Lshort,fsh=stratum((s['4h_fup']<=.30).to_numpy(),'숏')
     Lboth,fb=stratum(((s['4h_fup']>=.70)|(s['4h_fup']<=.30)).to_numpy(),'양방향')

@@ -1,10 +1,19 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-28 (I.29 실거래 버그 수정+리허설 강화+재arm ✅ — qty quantize/멱등 메서드 수정, 리허설 21/21 실제약 검증, 구 49338→수정본 PID 54043 ARMED. 다음 신호 실주문 모니터)
+**Last updated:** 2026-06-28 (I.30 롱전용 vs 롱+숏 — 숏=음수EV 데드웨이트(6단계 정합), 롱 전용 권고(거래당↑·구현 단순). 정직: 라이브 진입방식선 롱도 marginal — 헤드라인 +90.5는 stride/표본 산물, 최종판정 라이브/shadow. 라이브 숏게이트 확인 대기)
 **Status:** 🔥 [I] 실거래 ARMED 수정본 (PID 54043, 4h 정각·thr0.70·단일·1x, qty quantize 적용). shadow(PID 14414) 정상 누적(outcome 6건 hit 0.83). 감쇠 = shadow 주도구 + 이제 실거래도 체결 가능
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
 
 ⚠️ **운영 주의**: 실거래 데몬 **PID 54043**(수정본, ARMED, $180/레버1/$60손실한도/CAP$60per trade). 다음 thr0.70 신호 시 실주문(~$48 명목) 나감 — 첫 체결 모니터. shadow PID 14414 별도. sleep 비활성. auto-restart 없음(재부팅 시 수동 재기동). kill: `touch research/i_similarity/shadow/live/KILL`.
+
+---
+
+## 🔬 2026-06-28 — I.30: 롱 전용 vs 롱+숏 (숏 제거 효과)
+
+- 숏 6단계(25~28-1) 데드 확정 → 숏 빼면? dense(매분=라이브 운영점) causal 독립 4h thr0.70.
+- **정직성(방법론 정합)**: 숏 A stride-10 +60.9(n17 플룩)/B dense −12.4/C dense-causal −14.3. 롱도 A +98.7(n62)→C **−4.1**(n225). earliest-crossing(라이브 진입)=최약. **+90.5/0.084%일 헤드라인=stride-10 소표본+유리 진입phase 산물**.
+- 거래당: 롱전용 −4.1 > 양방향 −10.4(숏 빼면↑). 숏 비중 46%, 숏 거래당 −14.3(음수EV). 일수익 full 롱전용 −1.07>양방향 −4.93(+3.86), OOS te 롱 +0.26<양방향 +1.94(숏 test +6.0=n4플룩, CI 다 0포함=무의미).
+- **판정**: 숏=데드웨이트 → **롱 전용 권고**(거래당·구현 단순·6단계 정합). 일수익 우위 noise라 단정 X. **롱도 honest measure 에선 marginal → 최종 판정 라이브/shadow.** 라이브 숏게이트 반영은 사용자 확인 후.
 
 ---
 

@@ -407,6 +407,13 @@
   - 검증: 실 API spec fetch 정상, 과거 실패 3건(6/19숏·6/25롱·6/28숏) 모두 qty=0.03 명목 $47~51 valid. 재arm 전 거래소 포지션 0·equity $188.32 불변(failed safe 확인).
   - **재arm**: 구 49338 클린 종료(orphan 0, shadow 14414 무영향) → 수정본 **PID 54043 ARMED**(DRY=False ARM=True, spec 로깅, WS 연결, KILL 없음, ledger 0). 다음 thr0.70 신호 시 실주문 모니터.
   - 산출물: OPS_CHECK 후속. 코드 i_live_order.py(quantize_qty/Mock 강화), execution.py(get_order_by_link/get_instrument_spec), i_live_daemon.py, i_live_rehearsal.py.
+- I.30 **롱 전용 vs 롱+숏 (숏 제거 효과) ⚠️→롱전용 권고** (2026-06-28):
+  - 숏 6단계(25~28-1) 데드 확정 → 숏 빼면? dense(매분=라이브 운영점) causal 독립 4h thr0.70.
+  - **방법론 정합(정직)**: 숏 A stride-10 +60.9(n17 플룩) / B dense +(−12.4 n249) / C dense-causal −14.3. 롱도 A +98.7(n62)→C **−4.1**(n225). earliest-crossing(라이브 진입)=최약 진입. **+90.5/0.084%일 헤드라인은 stride-10 소표본+유리 진입phase 산물**.
+  - **거래당**: 롱전용 −4.1 > 양방향 −10.4 (숏 빼면 확실↑, 숏이 끌어내림). 숏 비중 46%, 숏 거래당 −14.3(음수EV 데드웨이트).
+  - **일수익**: full 롱전용 −1.07 > 양방향 −4.93(+3.86 개선). OOS te 롱 +0.26 < 양방향 +1.94이나 숏 test +6.0=n4 플룩, **CI 셋 다 0 포함=구분 불가**.
+  - **판정**: 숏=음수EV 데드 → 롱 전용이 거래당·구현(one-way 단순)·6단계 정합 우위 → **롱 전용 권고**(일수익 우위는 noise라 단정 X). 라이브 숏게이트 반영은 사용자 확인 후. 더 큰 발견: 라이브 honest measure 롱도 marginal → 최종 판정 라이브/shadow.
+  - 산출물: STAGE30_REPORT.md. 코드 i_longonly.py.
 - I.6 ⬜ (남은 형제들):
   - **shadow 결과 누적 대기** (가동 중 — 2025Q3+ 미확정/진위 선결, 수개월)
   - **수집 공백 백필** (5/1~6/6 — pool·정규화 최신화)
@@ -470,4 +477,4 @@
 
 ---
 
-**마지막 업데이트**: 2026-06-28 (I.29 실거래 버그 수정+리허설 강화+재arm ✅ — 점검서 찾은 버그2 수정: qty quantize_qty(step floor, 실명세 qtyStep 0.01) + get_order_by_link/get_instrument_spec 실클라 추가. 리허설 강화(Mock 실 step/min/인터페이스 검증, 0.035 거부, get_wallet_equity 누락도 잡음) 21/21 PASS, preflight 15/15. 과거 실패 3건 재현 valid(qty 0.03). 재arm 전 거래소 포지션 0·equity $188.32 불변(failed safe). 구 49338 클린종료→수정본 PID 54043 ARMED(spec 로깅·WS·KILL 없음·ledger 0). 다음 신호 실주문 모니터. shadow 14414 무영향. 이전: 운영점검 ❌(주문 깨짐 발견) — 본인 지적(27/28 은 GBM, 우리는 kNN) 타당해 28 하락 라벨을 kNN 으로 다시. 정렬도 = 이웃 down합의 ↔ 실제 down corr −0.001~−0.002 ≈0(상승 kNN 부호일치 0.78 과 극명 대조). 3 공간(21거울/하락10/21+10) 전부 net 음수·Bonf 생존 0. GBM(AUC 0.51)·kNN(정렬 0.00) 일치 → 하락 예측불가는 방법·라벨 무관, 시장 본질(큰 하락=사전 미시상태와 무관, 돌발). 하락 6단계 전부 ❌(25→26→27→27-1→28→28-1). 유일 미탐 청산/OI(H ⬜). 4h 양방향 합산 재확정. 라이브 49338 유지. 이전: I.28 하락 특화 라벨 GBM ❌)
+**마지막 업데이트**: 2026-06-28 (I.30 롱전용 vs 롱+숏 — 숏=음수EV 데드웨이트(거래당 −14.3, 비중46%, 6단계 정합), 숏 빼면 거래당↑(롱전용 −4.1 > 양방향 −10.4) → 롱 전용 권고(구현 단순·6단계 정합). 단 일수익 우위 noise(CI 겹침). 정직 발견: dense-causal(라이브 진입방식)에선 롱도 marginal(−4.1) — +90.5/0.084%일은 stride-10 소표본+유리 진입phase 산물, 최종판정 라이브/shadow. 라이브 숏게이트 사용자 확인 후. 이전: I.29 실거래 버그 수정+재arm ✅ — 점검서 찾은 버그2 수정: qty quantize_qty(step floor, 실명세 qtyStep 0.01) + get_order_by_link/get_instrument_spec 실클라 추가. 리허설 강화(Mock 실 step/min/인터페이스 검증, 0.035 거부, get_wallet_equity 누락도 잡음) 21/21 PASS, preflight 15/15. 과거 실패 3건 재현 valid(qty 0.03). 재arm 전 거래소 포지션 0·equity $188.32 불변(failed safe). 구 49338 클린종료→수정본 PID 54043 ARMED(spec 로깅·WS·KILL 없음·ledger 0). 다음 신호 실주문 모니터. shadow 14414 무영향. 이전: 운영점검 ❌(주문 깨짐 발견) — 본인 지적(27/28 은 GBM, 우리는 kNN) 타당해 28 하락 라벨을 kNN 으로 다시. 정렬도 = 이웃 down합의 ↔ 실제 down corr −0.001~−0.002 ≈0(상승 kNN 부호일치 0.78 과 극명 대조). 3 공간(21거울/하락10/21+10) 전부 net 음수·Bonf 생존 0. GBM(AUC 0.51)·kNN(정렬 0.00) 일치 → 하락 예측불가는 방법·라벨 무관, 시장 본질(큰 하락=사전 미시상태와 무관, 돌발). 하락 6단계 전부 ❌(25→26→27→27-1→28→28-1). 유일 미탐 청산/OI(H ⬜). 4h 양방향 합산 재확정. 라이브 49338 유지. 이전: I.28 하락 특화 라벨 GBM ❌)
