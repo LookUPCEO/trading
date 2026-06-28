@@ -21,10 +21,11 @@ def main():
     R['mod']=nrm['min_of_day'].to_numpy()[R['q'].to_numpy()]
     days=sorted(nrm['day'].unique()); dix={d:i for i,d in enumerate(days)}; ndays=len(days)
     R['dayi']=R['qday'].to_numpy()
-    # fup 그리드 (n>=70 인 분만 유효; 갈아타기 결정용)
-    fupG=np.full(ndays*1440,np.nan,np.float32)
+    # fup/frq 그리드 (n>=70 인 분만 유효; 갈아타기 결정용)
+    fupG=np.full(ndays*1440,np.nan,np.float32); frqG=np.full(ndays*1440,np.nan,np.float32)
     okn=R['4h_n']>=70
-    fupG[R.loc[okn,'dayi'].to_numpy()*1440+R.loc[okn,'mod'].to_numpy()]=R.loc[okn,'4h_fup'].to_numpy()
+    gi=R.loc[okn,'dayi'].to_numpy()*1440+R.loc[okn,'mod'].to_numpy()
+    fupG[gi]=R.loc[okn,'4h_fup'].to_numpy(); frqG[gi]=R.loc[okn,'4h_frq'].to_numpy()
     # cross-day 가격
     full=pd.read_parquet(LAB,columns=['day','min_of_day','mid']); full=full[full.day.isin(days)]
     P=np.full(ndays*1440,np.nan,np.float32)
@@ -65,31 +66,32 @@ def main():
 
     # 작업2/3: 갈아타기 (첫 m' where fup>=X 면 청산+재진입, 수수료 2배)
     print("\n===== 작업2/3: 갈아타기 net vs 고정 4h (수수료 2배 반영, OOS) =====")
-    fixed_net=dirn*(P[np.minimum(gm+H,NG-1)]/P[gm]-1)*1e4-FEE
+    fixed_net=dirn*frqG[gm]*1e4-FEE   # 진입 frq (clean, NaN 없음)
     print(f"  {'갈아타기thr':>10} | {'갈아탄건':>7} | {'전략 net':>8} {'고정 net':>8} | te 전략/고정 일수익")
-    for X in [.78,.82,.85]:
-        mp=first_thr[X]  # 갈아탈 분 (없으면 -1)
-        net=fixed_net.copy()  # 못 갈아탄 건 = 고정
-        sw=np.where(mp>=0)[0]
-        for j in sw:
+    def switch_net(X):
+        mp=first_thr[X]; net=fixed_net.copy(); sw=[]
+        for j in np.where(mp>=0)[0]:
             gmp=Eqd[j]*1440+mp[j]
-            seg1=P[gmp]/P[gm[j]]-1                       # 진입~갈아탐
-            seg2=P[min(gmp+H,NG-1)]/P[gmp]-1             # 갈아탄 후 4h
-            net[j]=dirn*(seg1+seg2)*1e4-2*FEE           # 수수료 2배
-        dms,los,his=dayci(Eqd[te],net[te]); dmf,lof,hif=dayci(Eqd[te],fixed_net[te])
+            seg2=frqG[gmp]                          # 갈아탄 후 4h (clean)
+            if np.isnan(seg2): continue             # 둘째 다리 미정의 → 갈아타기 불가, 고정 유지
+            seg1=P[gmp]/P[gm[j]]-1                  # 진입~갈아탐 (같은날, 가격 존재)
+            if np.isnan(seg1): continue
+            net[j]=dirn*(seg1+seg2)*1e4-2*FEE       # 수수료 2배
+            sw.append(j)
+        return net, np.array(sw,int)
+    for X in [.78,.82,.85]:
+        net,sw=switch_net(X)
+        dms,los,his=dayci(Eqd[te],net[te])
         print(f"  {X:.2f} | {len(sw):>7} | {net.mean():>+8.1f} {fixed_net.mean():>+8.1f} | "
               f"te {net[te].sum()/nd_te:>+5.2f}/{fixed_net[te].sum()/nd_te:>+5.2f} CI[{los:+.0f},{his:+.0f}]")
     print("  → 갈아타기 net 이 고정 넘으면 강영역 잡음. 못 넘으면 수수료/표본에 막힘.")
 
     # 작업4: 갈아탄 건만 따로 (강영역 실제 잡았나) + 피라미딩 메모
     print("\n===== 작업4: 갈아탄 건만 분리 (강영역 진짜 이득?) =====")
-    for X in [.82,.85]:
-        mp=first_thr[X]; sw=np.where(mp>=0)[0]
+    for X in [.78,.82]:
+        net,sw=switch_net(X)
         if len(sw)<3: print(f"  thr{X}: 갈아탄 {len(sw)}건 표본부족"); continue
-        sn=np.array([dirn*((P[Eqd[j]*1440+mp[j]]/P[gm[j]]-1)+(P[min(Eqd[j]*1440+mp[j]+H,NG-1)]/P[Eqd[j]*1440+mp[j]]-1))*1e4-2*FEE for j in sw])
-        fn=fixed_net[sw]
-        tesw=te[sw]
-        print(f"  thr{X}: 갈아탄 {len(sw)}건 — 갈아타기 {sn.mean():+.1f} vs 같은건 고정 {fn.mean():+.1f} | te {tesw.sum()}건")
+        print(f"  thr{X}: 갈아탄 {len(sw)}건 — 갈아타기 {net[sw].mean():+.1f} vs 같은건 고정 {fixed_net[sw].mean():+.1f} | te {te[sw].sum()}건")
     print("  피라미딩(강해지면 추가): one-way 넷팅=같은 방향 추가는 평단가 합산(독립 포지션 X)")
     print("  → 강영역 잡아도 수수료 2배+진입~갈아탐 구간 노출. OOS 표본(갈아탄 건) 적으면 미확정.")
 
