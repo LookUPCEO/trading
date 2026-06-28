@@ -1,10 +1,21 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-22 (I.28-1 하락 특화 라벨 + kNN(우리 진짜 방법) ❌ — kNN 으로도 정렬 0.00·생존 0 = 방법·라벨 무관 시장 본질. 하락 분기 6단계 전부 ❌. 4h 양방향 합산 재확정)
-**Status:** 🔥 [I] 실거래 ARMED (PID 49338, 4h 정각·thr0.70·단일·1x). 실주문 대기. 빈도·일수익 개선축 전부 소진. 감쇠 실측 = 최종 판정 (shadow outcome 3건)
+**Last updated:** 2026-06-28 (운영점검 — shadow 건강(outcome 6건 hit 0.83), 단 실거래 데몬 주문 실행 깨짐(버그2): 신호 3건 전부 실패, 실주문 0=실행불가(돈손실0 failed safe). 수정 대기)
+**Status:** 🔥 [I] 실거래 데몬 ARMED 이나 ★주문 실행 깨짐★ (PID 49338, qty step/get_order_by_link 버그 — 신호 3건 미체결). shadow(PID 14414) 정상 누적. 감쇠 = shadow 가 주도구
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
 
-⚠️ **운영 주의**: 자율 실거래 (PID 49338, $180/레버1/손실한도$60). 머신 sleep 시 중단. kill: `touch research/i_similarity/shadow/live/KILL`. shadow 수집 PID 14414 별도.
+⚠️ **운영 주의**: 실거래 데몬(PID 49338) ARMED 이나 주문 버그로 실체결 0(돈 안 나감). 수정 전엔 실거래 누락 지속. shadow(PID 14414) 정상. sleep 비활성(잠 안 듦). auto-restart 없음. kill: `touch research/i_similarity/shadow/live/KILL`.
+⚠️ **미수정 버그(2026-06-28 점검, 사용자 확인 후 조치)**: ① i_live_daemon.py:50 qty=round(.,3)→step 0.01 위반(Qty invalid) ② BybitClient.get_order_by_link 부재(멱등 무력). 리허설 12/12 는 Mock 괴리로 통과했던 것.
+
+---
+
+## 🔧 2026-06-28 — 운영 점검: shadow 건강, 실거래 주문 실행 깨짐 발견
+
+- 두 데몬 생존(shadow 20d21h / live 11d18h, CPU·MEM 정상, KILL 없음).
+- **실거래: 신호 3건(6/19 숏0.27, 6/25 롱0.73, 6/28 숏0.30) 발화했으나 전부 주문 실패** → 실주문 0은 '신호 대기' 아니라 '실행 불가'. 돈 손실 0(체결 0, 잔고 $188.32 불변 = failed safe). **6/25 롱 fup0.733(핵심 edge) 포함 3건 누락.**
+  - 버그#2(치명): qty round(.,3)=0.035 등 → Bybit step 0.01 위반 Qty invalid. 버그#1(잠복): get_order_by_link 실클라 부재(멱등 무력). 근본=리허설 Mock 괴리(12/12 거짓확신).
+- **shadow 정상**: outcome 6건(고유), 방향 hit 5/6=0.83, 평균 net +33.7bp, 공백 0 — 감쇠 주도구 건강(n 무의미). 백테 0.68 과 어긋남 없음.
+- sleep 비활성·auto-restart 없음. **조치(qty 수정+get_order_by_link 추가+재arm)는 사용자 확인 후.** 산출물: OPS_CHECK_2026-06-28.md.
 
 ---
 
