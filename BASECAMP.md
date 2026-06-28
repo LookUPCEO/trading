@@ -1,10 +1,20 @@
 # Mark19 BASECAMP
 
-**Last updated:** 2026-06-28 (I.30 롱전용 vs 롱+숏 — 숏=음수EV 데드웨이트(6단계 정합), 롱 전용 권고(거래당↑·구현 단순). 정직: 라이브 진입방식선 롱도 marginal — 헤드라인 +90.5는 stride/표본 산물, 최종판정 라이브/shadow. 라이브 숏게이트 확인 대기)
+**Last updated:** 2026-06-28 (I.31 earliest-crossing 재검토 — 0.084%/+90.5 헤드라인 상당부분 측정 인공물(stride-10 91분위 행운+비거래가능 mid-run). 라이브 실제 OOS=+0.26bp/day CI[−34,+74]=0과 구분 불가. [I] 진짜 edge 미확립. 레버리지 흔들림. 유일 판정=실측. 죽음 단정은 X) // 이전: I.30 롱전용 vs 롱+숏 — 숏=음수EV 데드웨이트(6단계 정합), 롱 전용 권고(거래당↑·구현 단순). 정직: 라이브 진입방식선 롱도 marginal — 헤드라인 +90.5는 stride/표본 산물, 최종판정 라이브/shadow. 라이브 숏게이트 확인 대기)
 **Status:** 🔥 [I] 실거래 ARMED 수정본 (PID 54043, 4h 정각·thr0.70·단일·1x, qty quantize 적용). shadow(PID 14414) 정상 누적(outcome 6건 hit 0.83). 감쇠 = shadow 주도구 + 이제 실거래도 체결 가능
 **Primary goal:** 일 1% 수익률 알고 트레이딩 봇
 
 ⚠️ **운영 주의**: 실거래 데몬 **PID 54043**(수정본, ARMED, $180/레버1/$60손실한도/CAP$60per trade). 다음 thr0.70 신호 시 실주문(~$48 명목) 나감 — 첫 체결 모니터. shadow PID 14414 별도. sleep 비활성. auto-restart 없음(재부팅 시 수동 재기동). kill: `touch research/i_similarity/shadow/live/KILL`.
+
+---
+
+## 🔬 2026-06-28 — I.31: earliest-crossing 재검토 (0.084% 진위) ⚠️ 헤드라인 인공물
+
+- 30단계 발견(라이브 earliest 진입 롱 marginal) 정면 검토. dense(매분 2024+).
+- **작업1 stride**: 매분 무dedup +53.0(n645). **stride-10 +98.7=매분 분포 91분위 행운(n62)** — phase 마법 아님, 소표본 낙관(부트스트랩).
+- **작업2 phase**: fup 레벨↑=단조 강함([.70,.72)+28/[.75,.80)+134). earliest(라이브)=최약 순간 −4.1. +53의 강함=mid-run 고fup(one-way 거래불가). confirm in-sample +128(n18)이나 OOS 표본0.
+- **작업3 thr↑**: in-sample 개선이나 OOS 붕괴(0.75 te−198)=6-3/6-5 과적합 재현.
+- **판정**: 0.084%/+90.5=stride 행운+비거래가능 분 포함 인공물. **라이브 실제(earliest·OOS)=+0.26bp/day CI[−34,+74]/trade=0과 구분 불가**(약양수·고분산, 연도 2024+16.7/2025−34.9/2026−22.9). shadow 6건=2026 우호적 소표본. **레버리지 0.5%(16) 흔들림**(~0 base 증폭=위험만). 롱전환=음수EV 제거이지 수익원 아님. **죽음 단정 X**(점추정 약양수, fup-레벨 구조 in-sample 실재). **유일 판정=라이브/shadow 실측**(백테 CI 한계). [I] 진짜 edge 확립 미달.
 
 ---
 
