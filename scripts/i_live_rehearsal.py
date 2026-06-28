@@ -31,7 +31,8 @@ def led_reset():
 # enter/exit 를 OrderManager 경유로 패치 (멱등/재시도/부분체결 반영)
 def enter_om(ex, horizon, direction, price):
     key = f"reh_{horizon}_{direction}"
-    notional = i_live.CAP_PER_TRADE; qty = round(notional / price, 3)
+    notional = i_live.CAP_PER_TRADE
+    qty, _r = i_live_order.quantize_qty(notional, price)   # I.29: 실 step 으로 quantize (구 round(.,3) 버그 수정)
     try: ex.check_can_enter(key, notional)
     except i_live.SafetyError as e:
         log.warning(f"진입 거부 [{key}]: {e}"); return None, None
@@ -56,13 +57,14 @@ def exit_om(ex, key, reason):
 
 print("=== 작업1: 재시도/부분체결/타임아웃/거부 (Mock 시나리오) ===")
 # 1) 정상
+_q150 = i_live_order.quantize_qty(150, 1600.0)[0]
 ex, mock, om = make_exec('ok'); k, r = enter_om(ex, '4h', +1, 1600.0)
-chk("정상 진입 체결 (filled=qty)", k and abs(r.filled_qty - round(150/1600, 3)) < 1e-9)
+chk("정상 진입 체결 (filled=quantized qty)", k and abs(r.filled_qty - _q150) < 1e-9)
 chk("  Mock 포지션 = 장부 qty", abs(mock.position - ex.led.positions[k]['qty']) < 1e-9)
 
 # 2) 부분체결 — 실제 체결분만 기록
 ex, mock, om = make_exec('partial'); k, r = enter_om(ex, '4h', +1, 1600.0)
-req = round(150/1600, 3)
+req = _q150
 chk("부분체결: 요청>체결, 체결분(0.6×)만 기록", k and r.filled_qty < req and abs(ex.led.positions[k]['qty'] - r.filled_qty) < 1e-9)
 
 # 3) 일시 오류 후 성공 (재시도 백오프)
@@ -99,6 +101,46 @@ mock.position += 5.0   # 불일치 유도
 ok = ex.reconcile()
 chk("정합 불일치 감지 → KILL 생성", (not ok) and os.path.exists(i_live.KILL_FILE))
 
-print(f"\n=== 리허설: {P} PASS / {F} FAIL (실자금/실키 0, Mock) ===")
-print("실 testnet (키 발급 후): 동일 루프 1회 + 부분/타임아웃 유도. 본인 액션.")
+print("\n=== 작업4: 실 거래소 제약 검증 (I.29 — Mock 가짜통과 방지) ===")
+# 4a) 인터페이스 정합: 실 BybitClient 가 주문경로의 모든 메서드를 진짜 갖는가 (get_order_by_link 누락 재발 방지)
+sys.path.insert(0, '/Users/mark/Desktop/Mark/mark19')
+need = ['place_market', 'get_order_by_link', 'get_position', 'get_wallet_equity',
+        'cancel_all', 'get_instrument_spec']
+try:
+    from live_bot.execution import BybitClient as _RealClient
+    missing = [m for m in need if not callable(getattr(_RealClient, m, None))]
+    chk(f"실 BybitClient 인터페이스 완비 (누락={missing})", not missing)
+    # Mock 이 실 클라 인터페이스와 동일 (메서드 누락 = 가짜통과 → 잡음)
+    mockmiss = [m for m in need if not callable(getattr(i_live_order.MockBybitClient, m, None))]
+    chk(f"Mock = 실 클라 인터페이스 동일 (누락={mockmiss})", not mockmiss)
+except Exception as e:
+    chk(f"BybitClient import (실패={e})", False)
+
+# 4b) quantize_qty 정확성 (구 round(.,3) 버그 차단)
+q, rs = i_live_order.quantize_qty(60, 1705.30)
+chk(f"quantize 60/1705.30 = {q} (step 0.01 배수, {rs})", i_live_order.on_step(q) and q == 0.03)
+chk("  명목 한도 미초과 (floor: 0.03×1705=$51 ≤ $60)", q * 1705.30 <= 60 + 1e-9)
+chk("  구 버그 round(.,3)=0.035 는 step 위반 (on_step False)", not i_live_order.on_step(round(60/1705.30, 3)))
+
+# 4c) Mock 이 구 버그 qty(0.035) 를 실제로 거부하는가 (이게 I.13 에서 안 잡혔음)
+mk = i_live_order.MockBybitClient('ok', mark=1705.30)
+bad = mk.place_market('long', round(60/1705.30, 3))   # 0.035 = step 위반
+chk(f"Mock 이 step 위반 qty 거부 (retCode={bad.get('retCode')})", bad.get('retCode') == 10001)
+good = mk.place_market('long', q)   # 0.03 = valid
+chk(f"Mock 이 valid quantized qty 수락 (retCode={good.get('retCode')})", good.get('retCode') == 0)
+chk("  min_notional 위반(미세 qty) 거부", i_live_order.quantize_qty(3, 1705.30)[0] == 0.0)
+
+# 4d) 과거 실패 3건(점검 발견) 재현 — 이제 valid qty 산출되나
+print("  과거 실패 3건 재현 (수정 후 valid?):")
+fails = [('6/19 숏', 1705.30), ('6/25 롱 fup0.733(핵심 edge)', 1551.27), ('6/28 숏', 1583.91)]
+allok = True
+for nm, px in fails:
+    qq, rr = i_live_order.quantize_qty(60, px)
+    valid = i_live_order.on_step(qq) and qq > 0 and 5 <= qq * px <= 60 + 1e-9
+    allok &= valid
+    print(f"    {nm}: px={px} → qty={qq} 명목=${qq*px:.0f} {'✅valid' if valid else '❌'}")
+chk("과거 실패 3건 전부 이제 valid qty (6/25 핵심 edge 포함)", allok)
+
+print(f"\n=== 리허설: {P} PASS / {F} FAIL (실자금/실키 0, Mock — 실 제약 검증 강화) ===")
+print("I.29: Mock 이 실 거래소 제약(step/min/메서드) 검증 → 가짜통과 방지. 다음 신호 시 실주문 모니터.")
 sys.exit(1 if F else 0)

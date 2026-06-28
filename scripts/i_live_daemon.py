@@ -27,9 +27,9 @@ DRY=os.environ.get('DRY_RUN','true').lower()!='false'
 ARM=os.environ.get('LIVE_ARM','')=='yes'
 
 class LiveShadow(SD.Shadow):
-    def __init__(self, eng, log, client, om, ex):
+    def __init__(self, eng, log, client, om, ex, spec):
         super().__init__(eng, log)
-        self.client=client; self.om=om; self.ex=ex
+        self.client=client; self.om=om; self.ex=ex; self.spec=spec
     def rollover(self, newday):
         # 라이브는 persist 안 함 (shadow 수집 데몬이 1Hz 저장). 버퍼만 교체.
         self.log.info(f"[live rollover] {self.buf.day} -> {newday} (persist skip)")
@@ -47,7 +47,10 @@ class LiveShadow(SD.Shadow):
         if cur_mid: self.enforce_live_exits(cur_mid)
     def place_entry(self, p):
         price=p['entry']; key=f"{p['day']}_{p['min']}_4h"
-        notional=CAP_PER_TRADE; qty=round(notional/price,3)
+        notional=CAP_PER_TRADE
+        qty,reason=i_live_order.quantize_qty(notional, price, **self.spec)   # I.29: step floor (구 round(.,3) 버그 수정)
+        if qty<=0:
+            self.log.error(f"[live] qty 산출 불가 {key}: {reason} (notional={notional} price={price:.2f}) — 진입 안 함"); return
         try:
             self.ex.check_can_enter(key, notional)
         except i_live.SafetyError as e:
@@ -103,12 +106,17 @@ def main():
     from execution import BybitClient
     client=BybitClient()
     eq=client.get_wallet_equity()
+    try:
+        spec=client.get_instrument_spec()
+        log.info(f"   instrument spec: {spec}")
+    except Exception as e:
+        spec=dict(i_live_order.SPEC_FALLBACK); log.warning(f"   spec fetch 실패 {e} → fallback {spec}")
     log.info(f"=== [I] LIVE daemon — DRY={DRY} ARM={ARM} equity=${eq:.2f} CAP/trade=${CAP_PER_TRADE} ===")
     log.info(f"   ⚠️ {'DRY (실주문 X)' if (DRY or not ARM) else '★ 실거래 ARMED ★'}")
     om=i_live_order.OrderManager(client, log=log)
     ex=i_live.LiveExecutor(client=client, log=log)
     eng=i_shadow.Engine()
-    sh=LiveShadow(eng, log, client, om, ex)
+    sh=LiveShadow(eng, log, client, om, ex, spec)
     def minute_loop():
         last=-1
         while True:

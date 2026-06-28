@@ -320,3 +320,32 @@ class BybitClient:
         r.raise_for_status()
         lst = r.json()["result"]["list"]
         return lst[0] if lst else None
+
+    def get_order_by_link(self, link_id: str) -> Optional[dict]:
+        """order_link_id 로 주문 조회 (멱등성 — 재전송 전 상태확인).
+        realtime(미체결/최근) → 없으면 history(체결/종료) 순. I.29: 실 클라엔 없던 메서드 추가."""
+        for path in ("realtime", "history"):
+            try:
+                url = f"{self.base}/v5/order/{path}"
+                params = (f"category={self.cfg.category}&symbol={self.cfg.symbol}"
+                          f"&orderLinkId={link_id}")
+                r = requests.get(url + "?" + params, headers=self._headers(params), timeout=10)
+                r.raise_for_status()
+                lst = r.json().get("result", {}).get("list", [])
+                if lst:
+                    return lst[0]
+            except Exception:
+                continue
+        return None
+
+    def get_instrument_spec(self) -> dict:
+        """ETHUSDT 실 거래소 제약 (qtyStep/minQty/minNotional/tick). public, 무인증.
+        I.29: qty 를 실 명세에 맞춰 quantize 하기 위해."""
+        url = f"{self.base}/v5/market/instruments-info"
+        params = f"category={self.cfg.category}&symbol={self.cfg.symbol}"
+        r = requests.get(url + "?" + params, timeout=10)
+        r.raise_for_status()
+        it = r.json()["result"]["list"][0]
+        lf = it["lotSizeFilter"]; pf = it["priceFilter"]
+        return dict(qty_step=float(lf["qtyStep"]), min_qty=float(lf["minOrderQty"]),
+                    min_notional=float(lf.get("minNotionalValue", 5)), tick=float(pf["tickSize"]))

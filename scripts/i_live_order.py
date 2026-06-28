@@ -7,7 +7,32 @@ client-agnostic (실 BybitClient 또는 MockClient). 실패를 성공으로 오�
 부분체결: 체결 후 cumExecQty 조회 → ledger 에 '실제 체결 수량' 기록 (요청 수량 가정 X).
 거부(잔고/한도): 재시도 X, 안전 중단 신호.
 """
-import time, logging
+import time, logging, math
+
+# Bybit ETHUSDT linear perp 실 명세 (instruments-info, 2026-06-28 확인) — fetch 실패 시 fallback
+SPEC_FALLBACK = dict(qty_step=0.01, min_qty=0.01, min_notional=5.0, tick=0.01)
+
+def quantize_qty(notional, price, qty_step=0.01, min_qty=0.01, min_notional=5.0, **_):
+    """명목(notional)·가격 → 거래소 qtyStep 배수로 floor (한도 초과 방지).
+    반환 (qty, reason). qty<=0 = 거래 불가(min 미달). round(.,3) 버그(step 위반) 차단.
+    floor 이유: round 는 명목 한도($60)를 초과할 수 있음 → 항상 내림."""
+    if price <= 0 or notional <= 0:
+        return 0.0, 'bad_input'
+    raw = notional / price
+    steps = math.floor(raw / qty_step + 1e-9)
+    qty = round(steps * qty_step, 8)
+    if qty < min_qty - 1e-12:
+        return 0.0, f'below_min_qty({qty:.4f}<{min_qty})'
+    if qty * price < min_notional - 1e-9:
+        return 0.0, f'below_min_notional({qty*price:.2f}<{min_notional})'
+    # step 정합 재확인 (부동소수 안전)
+    if abs(qty / qty_step - round(qty / qty_step)) > 1e-6:
+        return 0.0, f'step_misalign({qty})'
+    return qty, 'ok'
+
+def on_step(qty, qty_step=0.01):
+    """qty 가 qtyStep 배수인가 (검증/리허설용)."""
+    return qty > 0 and abs(qty / qty_step - round(qty / qty_step)) <= 1e-6
 
 class OrderResult:
     def __init__(self, ok, filled_qty=0.0, avg_price=0.0, status='', reject=False, raw=None):
@@ -74,14 +99,25 @@ class OrderManager:
 
 # ───────── Mock Bybit V5 (testnet 리허설용: 성공/부분/타임아웃/거부 결정적 시뮬) ─────────
 class MockBybitClient:
-    """결정적 시나리오로 주문 생명주기 시뮬. 실키/실자금 불필요."""
-    def __init__(self, scenario='ok'):
+    """결정적 시나리오로 주문 생명주기 시뮬. 실키/실자금 불필요.
+    ⚠️ 실 거래소 제약(qtyStep/minQty/minNotional)을 실제로 검증 — Mock 가짜통과 방지(I.13 교훈).
+    실 BybitClient 와 동일 인터페이스(메서드 누락 = 리허설 실패로 잡힘)."""
+    def __init__(self, scenario='ok', spec=None, mark=1600.0):
         self.scenario = scenario; self.orders = {}; self.position = 0.0; self.calls = 0
         self.place_calls = 0
+        self.spec = spec or dict(SPEC_FALLBACK); self.mark = mark
+    def get_instrument_spec(self):
+        return dict(self.spec)
     def place_market(self, side, qty, reduce_only=False, order_link_id=None):
         self.place_calls += 1
         sgn = 1 if side == 'long' else -1
         sc = self.scenario
+        # 실 거래소 제약 검증 (실제 Bybit 거부 재현 — round(.,3)=0.035 같은 step 위반 잡음)
+        st = self.spec['qty_step']
+        if qty < self.spec['min_qty'] - 1e-12 or abs(qty/st - round(qty/st)) > 1e-6:
+            return {'retCode': 10001, 'retMsg': 'Qty invalid'}
+        if qty * self.mark < self.spec['min_notional'] - 1e-9:
+            return {'retCode': 10001, 'retMsg': 'The order value is lower than the minimum'}
         if sc == 'reject':
             return {'retCode': 110007, 'retMsg': 'insufficient balance'}
         if sc == 'transient_then_ok':
